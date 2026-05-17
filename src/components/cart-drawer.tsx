@@ -12,10 +12,11 @@ export function CartDrawer() {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+    const wasLocked = document.body.style.overflow === "hidden";
+    if (!wasLocked) document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      if (!wasLocked) document.body.style.overflow = "";
     };
   }, [isOpen, close]);
 

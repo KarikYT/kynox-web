@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 
@@ -7,6 +7,28 @@ export function SiteNav({ active }: { active?: "home" | "store" }) {
   const { count, open, lastAddedId } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const bump = lastAddedId !== null;
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  // Close menu on Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   return (
     <>
@@ -53,7 +75,7 @@ export function SiteNav({ active }: { active?: "home" | "store" }) {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={menuOpen ? "Zavrieť menu" : "Otvoriť menu"}
             className="md:hidden grid place-items-center w-10 h-10 border border-foreground hover:bg-foreground hover:text-background transition-all"
           >
             {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -61,44 +83,40 @@ export function SiteNav({ active }: { active?: "home" | "store" }) {
         </div>
       </nav>
 
-      {/* Mobile menu */}
-      <div
-        className={`fixed inset-0 z-40 md:hidden transition-opacity duration-300 ${
-          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div
-          className="absolute inset-0 bg-background/95 backdrop-blur-md"
-          onClick={() => setMenuOpen(false)}
-        />
-        <div
-          className={`relative h-full flex flex-col items-center justify-center gap-8 font-display uppercase text-4xl transition-transform duration-500 ${
-            menuOpen ? "translate-y-0" : "-translate-y-8"
-          }`}
-        >
-          <Link
-            to="/"
+      {/* Mobile menu — rendered above cart (z-[55]) but below cart overlay (z-[60]) */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-[55] md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-background/95 backdrop-blur-md"
             onClick={() => setMenuOpen(false)}
-            className="hover:text-primary transition-colors"
-          >
-            Domov
-          </Link>
-          <Link
-            to="/store"
-            onClick={() => setMenuOpen(false)}
-            className="hover:text-primary transition-colors"
-          >
-            Store
-          </Link>
-          <a
-            href="/#join"
-            onClick={() => setMenuOpen(false)}
-            className="hover:text-primary transition-colors"
-          >
-            Pridaj sa
-          </a>
+          />
+          {/* Links */}
+          <div className="relative h-full flex flex-col items-center justify-center gap-10 font-display uppercase text-5xl">
+            <Link
+              to="/"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-primary transition-colors"
+            >
+              Domov
+            </Link>
+            <Link
+              to="/store"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-primary transition-colors"
+            >
+              Store
+            </Link>
+            <a
+              href="/#join"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-primary transition-colors"
+            >
+              Pridaj sa
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
