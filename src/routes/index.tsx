@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sprinter.jpg";
 import strengthImg from "@/assets/program-strength.jpg";
 import runImg from "@/assets/program-run.jpg";
 import { useReveal } from "@/hooks/use-reveal";
+import { SiteNav } from "@/components/site-nav";
 
 export const Route = createFileRoute("/")({
   component: Index,
