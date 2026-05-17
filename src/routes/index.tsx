@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sprinter.jpg";
 import strengthImg from "@/assets/program-strength.jpg";
 import runImg from "@/assets/program-run.jpg";
 import { useReveal } from "@/hooks/use-reveal";
+import { SiteNav } from "@/components/site-nav";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -30,17 +31,7 @@ function Index() {
   useReveal();
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
-      {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 mix-blend-difference px-4 sm:px-6 lg:px-12 py-5 sm:py-8 flex justify-between items-center">
-        <Link to="/" className="font-display text-xl sm:text-2xl tracking-tighter uppercase">KYNOX</Link>
-        <div className="hidden md:flex gap-6 lg:gap-10 text-xs font-bold uppercase tracking-widest">
-          <a href="#protocols" className="hover:text-primary transition-colors">Protokoly</a>
-          <a href="#metrics" className="hover:text-primary transition-colors">Metriky</a>
-          <Link to="/store" className="hover:text-primary transition-colors">Store</Link>
-          <a href="#join" className="hover:text-primary transition-colors">Pridaj sa</a>
-        </div>
-        <div className="w-8 sm:w-10 h-1 bg-foreground" />
-      </nav>
+      <SiteNav active="home" />
 
       {/* Hero */}
       <section className="relative min-h-[100svh] flex flex-col justify-end overflow-hidden">
