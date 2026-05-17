@@ -14,7 +14,7 @@ export const Route = createFileRoute("/store")({
       {
         name: "description",
         content:
-          "KYNOX Store. Obuv, oblečenie a výbava stavaná pre maximálny výkon.",
+          "KYNOX Store. Obuv, oblečenie a výbava staraná pre maximálny výkon.",
       },
     ],
   }),
@@ -82,9 +82,19 @@ const categories = ["Všetko", "Obuv", "Vrchné vrstvy", "Tréning", "Hydratáci
 function StorePage() {
   useReveal();
   const [activeCat, setActiveCat] = useState("Všetko");
+  const [cart, setCart] = useState<number[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function addToCart(id: number, name: string) {
+    setCart((prev) => [...prev, id]);
+    setToast(`${name} pridaný do košíka`);
+    setTimeout(() => setToast(null), 2500);
+  }
+
   const visible = products.filter(
     (p) => activeCat === "Všetko" || p.tag === activeCat,
   );
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
       {/* Nav */}
@@ -97,7 +107,14 @@ function StorePage() {
           <Link to="/store" className="text-primary">Store</Link>
           <a href="#join" className="hover:text-primary transition-colors">Pridaj sa</a>
         </div>
-        <div className="w-8 sm:w-10 h-1 bg-foreground" />
+        <div className="flex items-center gap-4">
+          {cart.length > 0 && (
+            <span className="font-mono text-xs text-background bg-primary px-2 py-1">
+              {cart.length}
+            </span>
+          )}
+          <div className="w-8 sm:w-10 h-1 bg-foreground" />
+        </div>
       </nav>
 
       {/* Hero header */}
@@ -121,7 +138,7 @@ function StorePage() {
         </div>
       </header>
 
-      {/* Category filter — visual only */}
+      {/* Category filter */}
       <div className="sticky top-16 sm:top-20 z-40 bg-background/85 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-4 flex gap-2 sm:gap-3 overflow-x-auto">
           {categories.map((c) => {
@@ -184,11 +201,10 @@ function StorePage() {
                   </div>
                   <button
                     type="button"
-                    disabled
-                    className="shrink-0 font-mono text-[10px] uppercase tracking-widest border border-border text-muted-foreground px-3 py-2 cursor-not-allowed"
-                    title="Čoskoro"
+                    onClick={() => addToCart(p.id, p.name)}
+                    className="shrink-0 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-2 hover:bg-primary hover:text-background transition-all"
                   >
-                    Čoskoro
+                    Pridať
                   </button>
                 </div>
               </article>
@@ -228,6 +244,13 @@ function StorePage() {
           </div>
         </div>
       </footer>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-primary text-background font-mono text-xs uppercase tracking-widest px-6 py-3 shadow-lg animate-fade-up">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
