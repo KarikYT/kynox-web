@@ -1,7 +1,5 @@
-import shoeImg from "@/assets/product-shoe.jpg";
-import hoodieImg from "@/assets/product-hoodie.jpg";
-import bottleImg from "@/assets/product-bottle.jpg";
-import shirtImg from "@/assets/product-shirt.jpg";
+// Products sourced from Sportisimo.sk — Nike collection
+// Images via i.sportisimo.com CDN
 
 export type Product = {
   id: number;
@@ -15,102 +13,135 @@ export type Product = {
   details: string[];
 };
 
+const img = (id: number, n: number) =>
+  `https://i.sportisimo.com/products/images/${id}/${id}_${n}.jpg`;
+
 export const products: Product[] = [
   {
     id: 1,
-    slug: "iron-flask-750",
-    tags: ["Futbal", "Hydratácia"],
-    name: "Iron Flask 750",
-    price: 39,
+    slug: "nike-court-vision-low",
+    tags: ["Tenisky", "Lifestyle"],
+    name: "Nike Court Vision Low",
+    price: 65.95,
     images: [
-      { src: bottleImg, alt: "KYNOX fľaša Iron Flask" },
-      { src: shoeImg, alt: "Iron Flask detail" },
-      { src: hoodieImg, alt: "Iron Flask v akcii" },
+      { src: img(1944899, 1), alt: "Nike Court Vision Low – pohľad zboku" },
+      { src: img(1944899, 2), alt: "Nike Court Vision Low – detail podrážky" },
+      { src: img(1944899, 3), alt: "Nike Court Vision Low – vrch topánky" },
     ],
     badge: "Nové",
     description:
-      "Termoizolačná fľaša z nehrdzavejúcej ocele. Drží ľad 24h, horúce 12h. Pre tých, čo nezastavujú medzi polčasmi.",
-    details: ["750 ml objem", "Dvojstenná oceľ", "Bez BPA", "Vákuová izolácia"],
+      "Klasický basketbalový look prenesený do každodenného života. Čistý dizajn, pohodlná výstelka a pevná podrážka – pre tých, čo chodia štýlovo.",
+    details: [
+      "Nízky strih",
+      "Pogumovaná podrážka",
+      "Syntetický zvršok",
+      "Veľkosti 36 – 47.5",
+    ],
   },
   {
     id: 2,
-    slug: "phantom-stick-pro",
-    tags: ["Hokej", "Hokejky"],
-    name: "Phantom Stick Pro",
-    price: 139,
+    slug: "nike-revolution-7",
+    tags: ["Beh", "Bežecká obuv"],
+    name: "Nike Revolution 7",
+    price: 53.95,
     images: [
-      { src: hoodieImg, alt: "KYNOX hokejka Phantom" },
-      { src: shirtImg, alt: "Phantom Stick detail" },
-      { src: bottleImg, alt: "Phantom Stick rukoväť" },
+      { src: img(1142378, 1), alt: "Nike Revolution 7 – bežecká obuv" },
+      { src: img(1142378, 2), alt: "Nike Revolution 7 – podrážka" },
+      { src: img(1142378, 3), alt: "Nike Revolution 7 – profil" },
     ],
     badge: null,
     description:
-      "Karbónová hokejka stavaná pre rýchle strely. Vyvážená rukoväť, agresívna čepeľ. Pre hráčov, čo skórujú v predĺžení.",
-    details: ["100% karbón", "Flex 85", "Hmotnosť 420g", "Pravá / ľavá"],
+      "Ľahká bežecká obuv pre každodenný tréning. Mäkká pena tlmí nárazy, sieťovaný zvršok drží nohu chladnú. Pre bežcov, čo nezastávajú.",
+    details: [
+      "Pena Nike React",
+      "Sieťovaný zvršok",
+      "Hmotnosť ~230 g",
+      "Veľkosti 36 – 49.5",
+    ],
   },
   {
     id: 3,
-    slug: "vortex-racket-01",
-    tags: ["Tenis", "Rakety"],
-    name: "Vortex Racket 01",
-    price: 189,
+    slug: "nike-phantom-gx2-pro-fg",
+    tags: ["Futbal", "Kopačky"],
+    name: "Nike Phantom GX 2 Pro FG",
+    price: 104.95,
     images: [
-      { src: shoeImg, alt: "KYNOX tenisová raketa" },
-      { src: shirtImg, alt: "Vortex Racket strunový vzor" },
-      { src: hoodieImg, alt: "Vortex Racket rukoväť" },
-    ],
-    badge: null,
-    description:
-      "Tenisová raketa s rozšíreným sweet spotom. Pre brutálne forhendy a presné voleje pri sieti.",
-    details: ["Hmotnosť 305g", "Hlava 100 sq.in", "Vzor 16x19", "Grafit + grafén"],
-  },
-  {
-    id: 4,
-    slug: "pulse-boxing-gloves",
-    tags: ["Box", "Rukavice"],
-    name: "Pulse Boxing Gloves",
-    price: 59,
-    images: [
-      { src: shirtImg, alt: "KYNOX boxerské rukavice" },
-      { src: hoodieImg, alt: "Pulse Gloves detail" },
-      { src: bottleImg, alt: "Pulse Gloves zapínanie" },
-    ],
-    badge: "Limit",
-    description:
-      "Boxerské rukavice s viacvrstvovou penou. Chránia kĺby, vracajú silu úderov. Pre sparringy aj vrece.",
-    details: ["12 / 14 / 16 oz", "Pravá koža", "Velcro pásik", "Anatomická päsť"],
-  },
-  {
-    id: 5,
-    slug: "iron-club-set",
-    tags: ["Golf", "Palice"],
-    name: "Iron Club Set",
-    price: 299,
-    images: [
-      { src: shoeImg, alt: "KYNOX golfové palice" },
-      { src: bottleImg, alt: "Iron Club hlavy" },
-      { src: shirtImg, alt: "Iron Club rukoväte" },
-    ],
-    badge: null,
-    description:
-      "Sada 7 palíc pre kontrolovanú hru od fairway až po green. Pre tých, čo si parky pri 18-tich jamkách berú vážne.",
-    details: ["7 palíc (4-PW)", "Oceľové driek", "Pravák", "Vrátane bagu"],
-  },
-  {
-    id: 6,
-    slug: "vortex-runner-01",
-    tags: ["Futbal", "Obuv"],
-    name: "Vortex Runner 01",
-    price: 199,
-    images: [
-      { src: hoodieImg, alt: "KYNOX futbalová obuv" },
-      { src: shoeImg, alt: "Vortex Runner podrážka" },
-      { src: shirtImg, alt: "Vortex Runner profil" },
+      { src: img(1387878, 1), alt: "Nike Phantom GX 2 Pro FG – kopačky" },
+      { src: img(1387878, 2), alt: "Nike Phantom GX 2 Pro FG – zvršok" },
+      { src: img(1387878, 3), alt: "Nike Phantom GX 2 Pro FG – podrážka" },
     ],
     badge: "Pro",
     description:
-      "Futbalové kopačky s lepkavou syntetikou pre presnú prihrávku. Pre tých, čo prelomia obranu.",
-    details: ["FG štuple", "Veľkosti 39 - 47", "Hmotnosť 215g", "Microfiber zvršok"],
+      "Kopačky na prírodný trávnik s precíznou kontrolou lopty. Anatomická výstelka a pevné lisované kolíky pre explozívny odraz. Pre hráčov, čo rozhodujú zápasy.",
+    details: [
+      "FG lisované kolíky",
+      "Precízna textúra zvršku",
+      "Hmotnosť 200 g",
+      "Veľkosti 39 – 47.5",
+    ],
+  },
+  {
+    id: 4,
+    slug: "nike-air-max-alpha-trainer-6",
+    tags: ["Fitness", "Tréning"],
+    name: "Nike Air Max Alpha Trainer 6",
+    price: 73.95,
+    images: [
+      { src: img(1695551, 1), alt: "Nike Air Max Alpha Trainer 6 – fitness obuv" },
+      { src: img(1695551, 2), alt: "Nike Air Max Alpha Trainer 6 – detail" },
+      { src: img(1695551, 3), alt: "Nike Air Max Alpha Trainer 6 – podrážka" },
+    ],
+    badge: null,
+    description:
+      "Tréningová obuv s viditeľnou Air jednotkou v päte pre komfort aj pri najťažších sériách. Stabilná platforma, flexibilná prednoha. Pre tých, čo trénujú naplno.",
+    details: [
+      "Viditeľná Air jednotka",
+      "Nízky strih",
+      "Multismerová drážkovanie podrážky",
+      "Veľkosti 40 – 49.5",
+    ],
+  },
+  {
+    id: 5,
+    slug: "nike-air-max-sc",
+    tags: ["Lifestyle", "Voľný čas"],
+    name: "Nike Air Max SC",
+    price: 52.95,
+    images: [
+      { src: img(886563, 1), alt: "Nike Air Max SC – lifestyle tenisky" },
+      { src: img(886563, 2), alt: "Nike Air Max SC – detail Air" },
+      { src: img(886563, 3), alt: "Nike Air Max SC – profil" },
+    ],
+    badge: null,
+    description:
+      "Ikonická Air Max silueta vo vstupnom segmente. Viditeľná vzduchová jednotka, retro tvar a denný komfort. Pre tých, čo chcú Air Max bez kompromisov v cene.",
+    details: [
+      "Viditeľná Air jednotka",
+      "Syntetický a textilný zvršok",
+      "Penová medzipodrážka",
+      "Veľkosti 36 – 49.5",
+    ],
+  },
+  {
+    id: 6,
+    slug: "nike-victori-one",
+    tags: ["Plávanie", "Šľapky"],
+    name: "Nike Victori One",
+    price: 26.95,
+    images: [
+      { src: img(1203334, 1), alt: "Nike Victori One – šľapky" },
+      { src: img(1203334, 2), alt: "Nike Victori One – remienok" },
+      { src: img(1203334, 3), alt: "Nike Victori One – podrážka" },
+    ],
+    badge: "Limit",
+    description:
+      "Jednoduché šľapky s mäkkou penovou podrážkou a nastaviteľným remienkom. Bazén, šatňa alebo lazy sunday – všade tam, kde nechceš riešiť šnúrky.",
+    details: [
+      "Penová podrážka",
+      "Nastaviteľný remienok",
+      "Vodoodpudivý materiál",
+      "Veľkosti 36 – 49.5",
+    ],
   },
 ];
 
