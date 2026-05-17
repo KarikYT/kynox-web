@@ -66,7 +66,7 @@ function StorePage() {
             Výbava — drop 026
           </span>
           <h1 className="font-display text-[clamp(3rem,12vw,11rem)] uppercase italic leading-[0.85] -tracking-[0.04em] mb-6 sm:mb-8 break-words animate-slide-up">
-            Výbava<br />pre brutalitu.
+            Výbava<br />na maximálny výkon.
           </h1>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 animate-fade-up [animation-delay:200ms]">
             <p className="max-w-lg text-base sm:text-lg text-foreground/80">
