@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import shoeImg from "@/assets/product-shoe.jpg";
-import hoodieImg from "@/assets/product-hoodie.jpg";
-import bottleImg from "@/assets/product-bottle.jpg";
-import shirtImg from "@/assets/product-shirt.jpg";
+import { Plus } from "lucide-react";
 import { useReveal } from "@/hooks/use-reveal";
+import { products, formatPrice } from "@/lib/products";
+import { useCart } from "@/context/cart-context";
+import { SiteNav } from "@/components/site-nav";
 
 export const Route = createFileRoute("/store")({
   component: StorePage,
@@ -20,9 +20,6 @@ export const Route = createFileRoute("/store")({
   }),
 });
 
-// ============================================================
-// HIERARCHIA KATEGÓRIÍ — pridaj šport a jeho podkategórie
-// ============================================================
 const sportCatalog: Record<string, string[]> = {
   "Všetko":    [],
   "Futbal":    ["Hydratácia", "Obuv", "Dresy", "Lopty", "Chrániče"],
@@ -37,79 +34,11 @@ const sportCatalog: Record<string, string[]> = {
   "Golf":      ["Palice", "Loptičky", "Vozíky", "Oblečenie"],
 };
 
-// ============================================================
-// PRODUKTY — tags: [šport, podkategória]
-// Príklad: tags: ["Futbal", "Hydratácia"]
-// ============================================================
-const products = [
-  {
-    id: 1,
-    tags: ["Futbal", "Hydratácia"],
-    name: "Iron Flask 750",
-    price: "39 €",
-    img: bottleImg,
-    alt: "KYNOX fľaša Iron Flask",
-    badge: "Nové",
-  },
-  {
-    id: 2,
-    tags: ["Hokej", "Hokejky"],
-    name: "Phantom Stick Pro",
-    price: "139 €",
-    img: hoodieImg,
-    alt: "KYNOX hokejka Phantom",
-    badge: null,
-  },
-  {
-    id: 3,
-    tags: ["Tenis", "Rakety"],
-    name: "Vortex Racket 01",
-    price: "189 €",
-    img: shoeImg,
-    alt: "KYNOX tenisová raketa",
-    badge: null,
-  },
-  {
-    id: 4,
-    tags: ["Box", "Rukavice"],
-    name: "Pulse Boxing Gloves",
-    price: "59 €",
-    img: shirtImg,
-    alt: "KYNOX boxerské rukavice",
-    badge: "Limit",
-  },
-  {
-    id: 5,
-    tags: ["Golf", "Palice"],
-    name: "Iron Club Set",
-    price: "299 €",
-    img: shoeImg,
-    alt: "KYNOX golfové palice",
-    badge: null,
-  },
-  {
-    id: 6,
-    tags: ["Futbal", "Obuv"],
-    name: "Vortex Runner 01",
-    price: "199 €",
-    img: hoodieImg,
-    alt: "KYNOX futbalová obuv",
-    badge: "Pro",
-  },
-];
-
 function StorePage() {
   useReveal();
+  const { add } = useCart();
   const [activeSport, setActiveSport] = useState("Všetko");
   const [activeSub, setActiveSub] = useState<string | null>(null);
-  const [cart, setCart] = useState<number[]>([]);
-  const [toast, setToast] = useState<string | null>(null);
-
-  function addToCart(id: number, name: string) {
-    setCart((prev) => [...prev, id]);
-    setToast(`${name} pridaný do košíka`);
-    setTimeout(() => setToast(null), 2500);
-  }
 
   function selectSport(sport: string) {
     setActiveSport(sport);
@@ -127,25 +56,7 @@ function StorePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
-      {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 mix-blend-difference px-4 sm:px-6 lg:px-12 py-5 sm:py-8 flex justify-between items-center">
-        <Link to="/" className="font-display text-xl sm:text-2xl tracking-tighter uppercase">
-          KYNOX
-        </Link>
-        <div className="hidden md:flex gap-6 lg:gap-10 text-xs font-bold uppercase tracking-widest">
-          <Link to="/" className="hover:text-primary transition-colors">Domov</Link>
-          <Link to="/store" className="text-primary">Store</Link>
-          <a href="#join" className="hover:text-primary transition-colors">Pridaj sa</a>
-        </div>
-        <div className="flex items-center gap-4">
-          {cart.length > 0 && (
-            <span className="font-mono text-xs text-background bg-primary px-2 py-1">
-              {cart.length}
-            </span>
-          )}
-          <div className="w-8 sm:w-10 h-1 bg-foreground" />
-        </div>
-      </nav>
+      <SiteNav active="store" />
 
       {/* Hero header */}
       <header className="pt-28 sm:pt-36 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-12 border-b border-border relative overflow-hidden">
@@ -168,7 +79,7 @@ function StorePage() {
         </div>
       </header>
 
-      {/* Sport filter — row 1 */}
+      {/* Sport filter */}
       <div className="sticky top-16 sm:top-20 z-40 bg-background/85 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-4 pb-2 flex gap-2 sm:gap-3 overflow-x-auto">
           {Object.keys(sportCatalog).map((sport) => {
@@ -190,7 +101,6 @@ function StorePage() {
           })}
         </div>
 
-        {/* Subcategory filter — row 2 */}
         {subCategories.length > 0 && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-3 flex gap-2 overflow-x-auto">
             <button
@@ -237,10 +147,14 @@ function StorePage() {
                   className="bg-background group relative flex flex-col animate-fade-up hover-lift"
                   style={{ animationDelay: `${idx * 80}ms` }}
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-card">
+                  <Link
+                    to="/store/$productSlug"
+                    params={{ productSlug: p.slug }}
+                    className="relative aspect-[4/5] overflow-hidden bg-card block"
+                  >
                     <img
-                      src={p.img}
-                      alt={p.alt}
+                      src={p.images[0].src}
+                      alt={p.images[0].alt}
                       width={800}
                       height={1024}
                       loading="lazy"
@@ -252,9 +166,16 @@ function StorePage() {
                       </span>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                    <span className="absolute bottom-4 right-4 font-mono text-[10px] uppercase tracking-widest text-background bg-foreground px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Zobraziť
+                    </span>
+                  </Link>
                   <div className="p-5 sm:p-6 flex items-end justify-between gap-4 border-t border-border">
-                    <div className="min-w-0">
+                    <Link
+                      to="/store/$productSlug"
+                      params={{ productSlug: p.slug }}
+                      className="min-w-0 flex-1"
+                    >
                       <div className="flex gap-2 flex-wrap mb-2">
                         {p.tags.map((t) => (
                           <span key={t} className="font-mono text-[10px] text-primary uppercase tracking-widest">
@@ -266,15 +187,20 @@ function StorePage() {
                         {p.name}
                       </h3>
                       <p className="font-mono text-xs sm:text-sm text-muted-foreground">
-                        {p.price}
+                        {formatPrice(p.price)}
                       </p>
-                    </div>
+                    </Link>
                     <button
                       type="button"
-                      onClick={() => addToCart(p.id, p.name)}
-                      className="shrink-0 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-2 hover:bg-primary hover:text-background transition-all"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        add(p.id, 1);
+                      }}
+                      aria-label={`Pridať ${p.name} do košíka`}
+                      className="shrink-0 grid place-items-center w-10 h-10 border border-primary text-primary hover:bg-primary hover:text-background transition-all active:scale-90"
                     >
-                      Pridať
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </article>
@@ -320,13 +246,6 @@ function StorePage() {
           </div>
         </div>
       </footer>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-primary text-background font-mono text-xs uppercase tracking-widest px-6 py-3 shadow-lg animate-fade-up">
-          {toast}
-        </div>
-      )}
     </div>
   );
 }
