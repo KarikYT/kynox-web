@@ -224,7 +224,7 @@ function Index() {
       <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8">
           <div className="font-display text-lg sm:text-xl uppercase tracking-tighter text-muted-foreground">
-            KYNOX © 2026 — Athletic Lab
+            KYNOX © 2026 — Athletic Lab                          PiCore Industries
           </div>
           <div className="flex gap-6 sm:gap-12 font-mono text-[10px] uppercase text-muted-foreground tracking-widest">
             <a href="#" className="hover:text-primary transition-colors">Súkromie</a>
