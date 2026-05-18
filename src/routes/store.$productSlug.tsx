@@ -81,9 +81,9 @@ function ProductPage() {
             <div className="animate-fade-up">
               <div className="relative aspect-[4/5] bg-card overflow-hidden border border-border">
                 <img
-                  key={activeImg}
-                  src={product.images[activeImg].src}
-                  alt={product.images[activeImg].alt}
+                  key={`${activeColor ?? "default"}-${activeImg}`}
+                  src={galleryImages[activeImg]?.src ?? galleryImages[0].src}
+                  alt={galleryImages[activeImg]?.alt ?? galleryImages[0].alt}
                   className="w-full h-full object-cover grayscale animate-scale-in"
                 />
                 {product.badge && (
@@ -92,26 +92,28 @@ function ProductPage() {
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-2 mt-2">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setActiveImg(i)}
-                    className={`aspect-square overflow-hidden border-2 transition-all ${
-                      i === activeImg
-                        ? "border-primary"
-                        : "border-border opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={img.src}
-                      alt={img.alt}
-                      className="w-full h-full object-cover grayscale"
-                    />
-                  </button>
-                ))}
-              </div>
+              {galleryImages.length > 1 && (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+                  {galleryImages.map((image, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveImg(i)}
+                      className={`aspect-square overflow-hidden border-2 transition-all ${
+                        i === activeImg
+                          ? "border-primary"
+                          : "border-border opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="w-full h-full object-cover grayscale"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Info */}
