@@ -1,7 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react";
-import { getProduct, products, formatPrice, type Product } from "@/lib/products";
+import {
+  getProduct,
+  getImages,
+  products,
+  formatPrice,
+  type Product,
+} from "@/lib/products";
 import { useCart } from "@/context/cart-context";
 import { SiteNav } from "@/components/site-nav";
 import { QtyControl } from "@/components/cart-drawer";
@@ -39,11 +45,27 @@ export const Route = createFileRoute("/store/$productSlug")({
 function ProductPage() {
   const { product } = Route.useLoaderData() as { product: Product };
   const { add, open, items } = useCart();
+
+  const hasVariants = product.colors.length > 0;
+  const selectorMode = product.variantSelector ?? (hasVariants ? "color" : "none");
+  const showSelector = hasVariants && selectorMode !== "none";
+
+  const [activeColor, setActiveColor] = useState<string | undefined>(
+    hasVariants
+      ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name
+      : undefined,
+  );
+  const galleryImages = getImages(product, activeColor);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
   const inCart = items.find((i) => i.id === product.id)?.qty ?? 0;
+
+  function selectColor(name: string) {
+    setActiveColor(name);
+    setActiveImg(0);
+  }
 
   function handleAdd() {
     add(product.id, qty);
@@ -69,11 +91,11 @@ function ProductPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
             {/* Gallery */}
             <div className="animate-fade-up">
-              <div className="relative aspect-[4/5] bg-card overflow-hidden border border-border">
+              <div className="relative aspect-square bg-card overflow-hidden border border-border">
                 <img
-                  key={activeImg}
-                  src={product.images[activeImg].src}
-                  alt={product.images[activeImg].alt}
+                  key={`${activeColor ?? "default"}-${activeImg}`}
+                  src={galleryImages[activeImg]?.src ?? galleryImages[0].src}
+                  alt={galleryImages[activeImg]?.alt ?? galleryImages[0].alt}
                   className="w-full h-full object-cover grayscale animate-scale-in"
                 />
                 {product.badge && (
@@ -82,26 +104,28 @@ function ProductPage() {
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-2 mt-2">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setActiveImg(i)}
-                    className={`aspect-square overflow-hidden border-2 transition-all ${
-                      i === activeImg
-                        ? "border-primary"
-                        : "border-border opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={img.src}
-                      alt={img.alt}
-                      className="w-full h-full object-cover grayscale"
-                    />
-                  </button>
-                ))}
-              </div>
+              {galleryImages.length > 1 && (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+                  {galleryImages.map((image, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveImg(i)}
+                      className={`aspect-square overflow-hidden border-2 transition-all ${
+                        i === activeImg
+                          ? "border-primary"
+                          : "border-border opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="w-full h-full object-cover grayscale"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Info */}
@@ -135,7 +159,7 @@ function ProductPage() {
                 {product.description}
               </p>
 
-              <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-10">
+              <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-6">
                 {product.details.map((d) => (
                   <li
                     key={d}
@@ -145,6 +169,88 @@ function ProductPage() {
                   </li>
                 ))}
               </ul>
+
+              {showSelector && (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {selectorMode === "image" ? "Variant" : "Farba"}
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/80 truncate ml-3">
+                      {activeColor}
+                    </span>
+                  </div>
+
+                  {selectorMode === "image" ? (
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                      {product.colors.map((c) => {
+                        const isActive = c.name === activeColor;
+                        const thumb = c.images[0];
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => selectColor(c.name)}
+                            aria-label={c.name}
+                            title={c.name}
+                            className={`relative aspect-square overflow-hidden border-2 transition-all active:scale-95 ${
+                              isActive
+                                ? "border-primary scale-[1.03] shadow-lg"
+                                : "border-border opacity-70 hover:opacity-100 hover:border-foreground"
+                            }`}
+                          >
+                            {thumb ? (
+                              <img
+                                src={thumb.src}
+                                alt={c.name}
+                                className="w-full h-full object-cover grayscale"
+                              />
+                            ) : (
+                              <span
+                                className="absolute inset-0"
+                                style={{ backgroundColor: c.hex }}
+                              />
+                            )}
+                            {!thumb && (
+                              <span className="absolute inset-0 grid place-items-center font-mono text-[8px] uppercase text-background mix-blend-difference">
+                                Čoskoro
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {product.colors.map((c) => {
+                        const isActive = c.name === activeColor;
+                        const empty = c.images.length === 0;
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => selectColor(c.name)}
+                            aria-label={c.name}
+                            title={c.name + (empty ? " (čoskoro)" : "")}
+                            className={`relative w-10 h-10 rounded-full border-2 transition-all active:scale-90 ${
+                              isActive
+                                ? "border-primary scale-110 shadow-lg"
+                                : "border-border hover:border-foreground"
+                            }`}
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            {empty && (
+                              <span className="absolute inset-0 rounded-full bg-background/60 grid place-items-center font-mono text-[8px] uppercase text-foreground">
+                                —
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="mt-auto space-y-3">
                 <div className="flex items-center gap-3">
@@ -202,7 +308,7 @@ function ProductPage() {
                   params={{ productSlug: p.slug }}
                   className="group bg-background flex flex-col"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-card">
+                  <div className="relative aspect-square overflow-hidden bg-card">
                     <img
                       src={p.images[0].src}
                       alt={p.images[0].alt}
