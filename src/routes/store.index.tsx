@@ -158,7 +158,7 @@ function StorePage() {
                       width={700}
                       height={700}
                       loading="lazy"
-                      className="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     {p.badge && (
                       <span className="absolute top-4 left-4 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-2 py-1">
