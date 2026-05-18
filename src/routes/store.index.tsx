@@ -150,13 +150,13 @@ function StorePage() {
                   <Link
                     to="/store/$productSlug"
                     params={{ productSlug: p.slug }}
-                    className="relative aspect-[4/5] overflow-hidden bg-card block"
+                    className="relative aspect-square overflow-hidden bg-card block"
                   >
                     <img
                       src={p.images[0].src}
                       alt={p.images[0].alt}
-                      width={800}
-                      height={1024}
+                      width={700}
+                      height={700}
                       loading="lazy"
                       className="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-105"
                     />

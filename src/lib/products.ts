@@ -24,6 +24,8 @@ export type Product = {
   price: number;
   images: ProductImage[];
   colors: ColorVariant[];
+  /** "color" = swatches, "image" = thumbnail picker, "none" = no selector. Defaults to "color" when colors exist. */
+  variantSelector?: "color" | "image" | "none";
   badge: string | null;
   description: string;
   details: string[];
@@ -49,6 +51,7 @@ export const products: Product[] = [
     name: "Mercurial Vapor 16 Club FG/MG Jr",
     price: 51.95,
     images: [{ src: mercurialMain, alt: "Mercurial Vapor 16 Club FG/MG Jr" }],
+    variantSelector: "image",
     colors: [
       { name: "Modrá / biela / ružová", hex: "#0055ff", images: modraImages },
       { name: "Žltá / čierna", hex: "#ffd700", images: [] },

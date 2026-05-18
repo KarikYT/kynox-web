@@ -1,7 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react";
-import { getProduct, products, formatPrice, getImages, type Product } from "@/lib/products";
+import {
+  getProduct,
+  getImages,
+  products,
+  formatPrice,
+  type Product,
+} from "@/lib/products";
 import { useCart } from "@/context/cart-context";
 import { SiteNav } from "@/components/site-nav";
 import { QtyControl } from "@/components/cart-drawer";
@@ -39,21 +45,27 @@ export const Route = createFileRoute("/store/$productSlug")({
 function ProductPage() {
   const { product } = Route.useLoaderData() as { product: Product };
   const { add, open, items } = useCart();
-  const hasColors = product.colors.length > 0;
+
+  const hasVariants = product.colors.length > 0;
+  const selectorMode = product.variantSelector ?? (hasVariants ? "color" : "none");
+  const showSelector = hasVariants && selectorMode !== "none";
+
   const [activeColor, setActiveColor] = useState<string | undefined>(
-    hasColors ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name : undefined,
+    hasVariants
+      ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name
+      : undefined,
   );
   const galleryImages = getImages(product, activeColor);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
+  const inCart = items.find((i) => i.id === product.id)?.qty ?? 0;
+
   function selectColor(name: string) {
     setActiveColor(name);
     setActiveImg(0);
   }
-
-  const inCart = items.find((i) => i.id === product.id)?.qty ?? 0;
 
   function handleAdd() {
     add(product.id, qty);
@@ -79,7 +91,7 @@ function ProductPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
             {/* Gallery */}
             <div className="animate-fade-up">
-              <div className="relative aspect-[4/5] bg-card overflow-hidden border border-border">
+              <div className="relative aspect-square bg-card overflow-hidden border border-border">
                 <img
                   key={`${activeColor ?? "default"}-${activeImg}`}
                   src={galleryImages[activeImg]?.src ?? galleryImages[0].src}
@@ -158,43 +170,85 @@ function ProductPage() {
                 ))}
               </ul>
 
-              {hasColors && (
+              {showSelector && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                      Farba
+                      {selectorMode === "image" ? "Variant" : "Farba"}
                     </span>
                     <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/80 truncate ml-3">
                       {activeColor}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {product.colors.map((c) => {
-                      const isActive = c.name === activeColor;
-                      const empty = c.images.length === 0;
-                      return (
-                        <button
-                          key={c.name}
-                          type="button"
-                          onClick={() => selectColor(c.name)}
-                          aria-label={c.name}
-                          title={c.name + (empty ? " (čoskoro)" : "")}
-                          className={`relative w-10 h-10 rounded-full border-2 transition-all active:scale-90 ${
-                            isActive
-                              ? "border-primary scale-110 shadow-lg"
-                              : "border-border hover:border-foreground"
-                          }`}
-                          style={{ backgroundColor: c.hex }}
-                        >
-                          {empty && (
-                            <span className="absolute inset-0 rounded-full bg-background/60 grid place-items-center font-mono text-[8px] uppercase text-foreground">
-                              —
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+
+                  {selectorMode === "image" ? (
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                      {product.colors.map((c) => {
+                        const isActive = c.name === activeColor;
+                        const thumb = c.images[0];
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => selectColor(c.name)}
+                            aria-label={c.name}
+                            title={c.name}
+                            className={`relative aspect-square overflow-hidden border-2 transition-all active:scale-95 ${
+                              isActive
+                                ? "border-primary scale-[1.03] shadow-lg"
+                                : "border-border opacity-70 hover:opacity-100 hover:border-foreground"
+                            }`}
+                          >
+                            {thumb ? (
+                              <img
+                                src={thumb.src}
+                                alt={c.name}
+                                className="w-full h-full object-cover grayscale"
+                              />
+                            ) : (
+                              <span
+                                className="absolute inset-0"
+                                style={{ backgroundColor: c.hex }}
+                              />
+                            )}
+                            {!thumb && (
+                              <span className="absolute inset-0 grid place-items-center font-mono text-[8px] uppercase text-background mix-blend-difference">
+                                Čoskoro
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {product.colors.map((c) => {
+                        const isActive = c.name === activeColor;
+                        const empty = c.images.length === 0;
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => selectColor(c.name)}
+                            aria-label={c.name}
+                            title={c.name + (empty ? " (čoskoro)" : "")}
+                            className={`relative w-10 h-10 rounded-full border-2 transition-all active:scale-90 ${
+                              isActive
+                                ? "border-primary scale-110 shadow-lg"
+                                : "border-border hover:border-foreground"
+                            }`}
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            {empty && (
+                              <span className="absolute inset-0 rounded-full bg-background/60 grid place-items-center font-mono text-[8px] uppercase text-foreground">
+                                —
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -254,7 +308,7 @@ function ProductPage() {
                   params={{ productSlug: p.slug }}
                   className="group bg-background flex flex-col"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-card">
+                  <div className="relative aspect-square overflow-hidden bg-card">
                     <img
                       src={p.images[0].src}
                       alt={p.images[0].alt}
