@@ -147,7 +147,7 @@ function ProductPage() {
                 {product.description}
               </p>
 
-              <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-10">
+              <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-6">
                 {product.details.map((d) => (
                   <li
                     key={d}
@@ -157,6 +157,46 @@ function ProductPage() {
                   </li>
                 ))}
               </ul>
+
+              {hasColors && (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Farba
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/80 truncate ml-3">
+                      {activeColor}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map((c) => {
+                      const isActive = c.name === activeColor;
+                      const empty = c.images.length === 0;
+                      return (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => selectColor(c.name)}
+                          aria-label={c.name}
+                          title={c.name + (empty ? " (čoskoro)" : "")}
+                          className={`relative w-10 h-10 rounded-full border-2 transition-all active:scale-90 ${
+                            isActive
+                              ? "border-primary scale-110 shadow-lg"
+                              : "border-border hover:border-foreground"
+                          }`}
+                          style={{ backgroundColor: c.hex }}
+                        >
+                          {empty && (
+                            <span className="absolute inset-0 rounded-full bg-background/60 grid place-items-center font-mono text-[8px] uppercase text-foreground">
+                              —
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-auto space-y-3">
                 <div className="flex items-center gap-3">
