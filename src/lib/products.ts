@@ -40,8 +40,8 @@ const modraImages: ProductImage[] = [
   { src: mercurialModra3, alt: "Mercurial Vapor 16 — modrá 3" },
   { src: mercurialModra4, alt: "Mercurial Vapor 16 — modrá 4" },
   { src: mercurialModra5, alt: "Mercurial Vapor 16 — modrá 5" },
-  { src: mercurialModra6, alt: "Mercurial Vapor 16 — modrá 6" },
-];
+
+  ];
 
 export const products: Product[] = [
   {
