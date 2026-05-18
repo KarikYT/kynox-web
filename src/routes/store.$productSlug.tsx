@@ -39,9 +39,19 @@ export const Route = createFileRoute("/store/$productSlug")({
 function ProductPage() {
   const { product } = Route.useLoaderData() as { product: Product };
   const { add, open, items } = useCart();
+  const hasColors = product.colors.length > 0;
+  const [activeColor, setActiveColor] = useState<string | undefined>(
+    hasColors ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name : undefined,
+  );
+  const galleryImages = getImages(product, activeColor);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+
+  function selectColor(name: string) {
+    setActiveColor(name);
+    setActiveImg(0);
+  }
 
   const inCart = items.find((i) => i.id === product.id)?.qty ?? 0;
 
