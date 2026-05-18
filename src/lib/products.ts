@@ -45,7 +45,7 @@ export const products: Product[] = [
     ],
     badge: "Použité",
     description: "Obohaťte svoju hru vďaka futbalovým kopačkám adidas, vytvoreným s myšlienkou na športovcov. Vyrobené z vysokokvalitnej imitácie kože, ponúkajú vynikajúcu podporu a pohodlie. Šnurovanie zabezpečuje ideálne prispôsobenie, a mäkký textilný vnútrajšok garantuje komfort počas dlhých tréningov. Vybavené pokročilou vonkajšou podrážkou Controlplate 2.0, tieto topánky sú optimalizované na hru na prírodnom povrchu, čo umožňuje presné ovládanie lopty a spoľahlivú priľnavosť. --- POUŽITÉ!!! ---",
-    details: ["Farba: Tmavomodrá", "Použité: Ano", "Farba Výrobcu: Lucblu/Ftwwht/Solred", "Konštrukcia: Syntetický vrch so Strikeprint textúrovaním na vnútornej strane a penová vrstva pre pohodlie", "Povrch: FxG podrážka"],
+    details: ["Použité: Ano", "Farba Výrobcu: Lucblu/Ftwwht/Solred", "Konštrukcia: Syntetický vrch so Strikeprint textúrovaním na vnútornej strane a penová vrstva pre pohodlie", "Povrch: FxG podrážka"],
   },
 ];
 
