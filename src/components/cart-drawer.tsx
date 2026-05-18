@@ -103,7 +103,7 @@ export function CartDrawer() {
                     <img
                       src={r.product.images[0].src}
                       alt={r.product.images[0].alt}
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all"
+                      className="w-full h-full object-cover hover:grayscale-0 transition-all"
                     />
                   </Link>
 
