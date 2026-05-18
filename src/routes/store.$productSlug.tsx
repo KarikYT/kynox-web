@@ -52,9 +52,11 @@ function ProductPage() {
 
   const [activeColor, setActiveColor] = useState<string | undefined>(
     hasVariants
-      ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name
-      : undefined,
+      ? product.colors.find((c) => c.images.length > 0)?.name ??
+        product.colors[0].name
+      : undefined
   );
+
   const galleryImages = getImages(product, activeColor);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
@@ -96,14 +98,16 @@ function ProductPage() {
                   key={`${activeColor ?? "default"}-${activeImg}`}
                   src={galleryImages[activeImg]?.src ?? galleryImages[0].src}
                   alt={galleryImages[activeImg]?.alt ?? galleryImages[0].alt}
-                  className="w-full h-full object-cover grayscale animate-scale-in"
+                  className="w-full h-full object-cover animate-scale-in"
                 />
+
                 {product.badge && (
                   <span className="absolute top-4 left-4 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-2 py-1">
                     {product.badge}
                   </span>
                 )}
               </div>
+
               {galleryImages.length > 1 && (
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
                   {galleryImages.map((image, i) => (
@@ -120,7 +124,7 @@ function ProductPage() {
                       <img
                         src={image.src}
                         alt={image.alt}
-                        className="w-full h-full object-cover grayscale"
+                        className="w-full h-full object-cover"
                       />
                     </button>
                   ))}
@@ -140,6 +144,7 @@ function ProductPage() {
                   </span>
                 ))}
               </div>
+
               <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl uppercase italic leading-[0.85] -tracking-[0.03em] mb-6">
                 {product.name}
               </h1>
@@ -186,13 +191,12 @@ function ProductPage() {
                       {product.colors.map((c) => {
                         const isActive = c.name === activeColor;
                         const thumb = c.images[0];
+
                         return (
                           <button
                             key={c.name}
                             type="button"
                             onClick={() => selectColor(c.name)}
-                            aria-label={c.name}
-                            title={c.name}
                             className={`relative aspect-square overflow-hidden border-2 transition-all active:scale-95 ${
                               isActive
                                 ? "border-primary scale-[1.03] shadow-lg"
@@ -203,18 +207,13 @@ function ProductPage() {
                               <img
                                 src={thumb.src}
                                 alt={c.name}
-                                className="w-full h-full object-cover grayscale"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <span
                                 className="absolute inset-0"
                                 style={{ backgroundColor: c.hex }}
                               />
-                            )}
-                            {!thumb && (
-                              <span className="absolute inset-0 grid place-items-center font-mono text-[8px] uppercase text-background mix-blend-difference">
-                                Čoskoro
-                              </span>
                             )}
                           </button>
                         );
@@ -225,13 +224,12 @@ function ProductPage() {
                       {product.colors.map((c) => {
                         const isActive = c.name === activeColor;
                         const empty = c.images.length === 0;
+
                         return (
                           <button
                             key={c.name}
                             type="button"
                             onClick={() => selectColor(c.name)}
-                            aria-label={c.name}
-                            title={c.name + (empty ? " (čoskoro)" : "")}
                             className={`relative w-10 h-10 rounded-full border-2 transition-all active:scale-90 ${
                               isActive
                                 ? "border-primary scale-110 shadow-lg"
@@ -280,6 +278,7 @@ function ProductPage() {
                       </>
                     )}
                   </button>
+
                   <button
                     type="button"
                     onClick={open}
@@ -288,6 +287,7 @@ function ProductPage() {
                     Košík
                   </button>
                 </div>
+
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   Doprava 2-4 dni. Platby zatiaľ neaktívne.
                 </p>
@@ -300,6 +300,7 @@ function ProductPage() {
             <h2 className="font-display text-2xl sm:text-3xl uppercase italic mb-8">
               Tiež brutálne
             </h2>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-border border border-border">
               {related.map((p) => (
                 <Link
@@ -312,9 +313,10 @@ function ProductPage() {
                     <img
                       src={p.images[0].src}
                       alt={p.images[0].alt}
-                      className="w-full h-full object-cover grayscale group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                   </div>
+
                   <div className="p-4 border-t border-border flex justify-between items-end">
                     <h3 className="font-display text-xl uppercase leading-none truncate">
                       {p.name}
