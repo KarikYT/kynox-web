@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as StoreIndexRouteImport } from './routes/store.index'
 import { Route as StoreProductSlugRouteImport } from './routes/store.$productSlug'
+import { Route as PayCodeRouteImport } from './routes/pay.$code'
+import { Route as OrderCodeRouteImport } from './routes/order.$code'
 
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
@@ -22,6 +26,16 @@ const StoreRoute = StoreRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreIndexRoute = StoreIndexRouteImport.update({
@@ -34,36 +48,62 @@ const StoreProductSlugRoute = StoreProductSlugRouteImport.update({
   path: '/$productSlug',
   getParentRoute: () => StoreRoute,
 } as any)
+const PayCodeRoute = PayCodeRouteImport.update({
+  id: '/pay/$code',
+  path: '/pay/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderCodeRoute = OrderCodeRouteImport.update({
+  id: '/order/$code',
+  path: '/order/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/store': typeof StoreRouteWithChildren
   '/store/$productSlug': typeof StoreProductSlugRoute
   '/store/': typeof StoreIndexRoute
+  '/pay/$code': typeof PayCodeRoute
+  '/order/$code': typeof OrderCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/store/$productSlug': typeof StoreProductSlugRoute
   '/store': typeof StoreIndexRoute
+  '/pay/$code': typeof PayCodeRoute
+  '/order/$code': typeof OrderCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cart': typeof CartRoute
   '/store': typeof StoreRouteWithChildren
   '/store/$productSlug': typeof StoreProductSlugRoute
   '/store/': typeof StoreIndexRoute
+  '/pay/$code': typeof PayCodeRoute
+  '/order/$code': typeof OrderCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/store' | '/store/$productSlug' | '/store/'
+  fullPaths: '/' | '/admin' | '/cart' | '/store' | '/store/$productSlug' | '/store/' | '/pay/$code' | '/order/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/store/$productSlug' | '/store'
-  id: '__root__' | '/' | '/store' | '/store/$productSlug' | '/store/'
+  to: '/' | '/admin' | '/cart' | '/store/$productSlug' | '/store' | '/pay/$code' | '/order/$code'
+  id: '__root__' | '/' | '/admin' | '/cart' | '/store' | '/store/$productSlug' | '/store/' | '/pay/$code' | '/order/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  CartRoute: typeof CartRoute
   StoreRoute: typeof StoreRouteWithChildren
+  PayCodeRoute: typeof PayCodeRoute
+  OrderCodeRoute: typeof OrderCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +122,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store/': {
       id: '/store/'
       path: '/'
@@ -95,6 +149,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/store/$productSlug'
       preLoaderRoute: typeof StoreProductSlugRouteImport
       parentRoute: typeof StoreRoute
+    }
+    '/pay/$code': {
+      id: '/pay/$code'
+      path: '/pay/$code'
+      fullPath: '/pay/$code'
+      preLoaderRoute: typeof PayCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order/$code': {
+      id: '/order/$code'
+      path: '/order/$code'
+      fullPath: '/order/$code'
+      preLoaderRoute: typeof OrderCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -113,7 +181,11 @@ const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  CartRoute: CartRoute,
   StoreRoute: StoreRouteWithChildren,
+  PayCodeRoute: PayCodeRoute,
+  OrderCodeRoute: OrderCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
