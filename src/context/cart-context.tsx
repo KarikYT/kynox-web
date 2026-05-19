@@ -1,69 +1,105 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type CartItem = { id: number; qty: number };
+export type CartLine = {
+  /** stable line key = productId + color + size */
+  key: string;
+  productId: string;
+  slug: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  qty: number;
+  colorName?: string | null;
+  colorImageUrl?: string | null;
+  size?: string | null;
+};
 
 type CartContextValue = {
-  items: CartItem[];
+  items: CartLine[];
   count: number;
+  total: number;
   isOpen: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
-  add: (id: number, qty?: number) => void;
-  remove: (id: number) => void;
-  setQty: (id: number, qty: number) => void;
+  add: (line: Omit<CartLine, "key" | "qty"> & { qty?: number }) => void;
+  remove: (key: string) => void;
+  setQty: (key: string, qty: number) => void;
   clear: () => void;
-  lastAddedId: number | null;
+  lastAddedKey: string | null;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-const STORAGE_KEY = "kynox-cart-v1";
+const COOKIE_NAME = "kynox-cart-v2";
+
+function readCookie(): CartLine[] {
+  if (typeof document === "undefined") return [];
+  const m = document.cookie.split("; ").find((row) => row.startsWith(COOKIE_NAME + "="));
+  if (!m) return [];
+  try {
+    const v = decodeURIComponent(m.split("=")[1]);
+    const parsed = JSON.parse(v);
+    return Array.isArray(parsed) ? (parsed as CartLine[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCookie(items: CartLine[]) {
+  if (typeof document === "undefined") return;
+  const v = encodeURIComponent(JSON.stringify(items));
+  // 60 days
+  document.cookie = `${COOKIE_NAME}=${v}; Path=/; Max-Age=${60 * 60 * 24 * 60}; SameSite=Lax`;
+}
+
+function makeKey(productId: string, color?: string | null, size?: string | null): string {
+  return `${productId}::${color ?? ""}::${size ?? ""}`;
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartLine[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [lastAddedId, setLastAddedId] = useState<number | null>(null);
+  const [lastAddedKey, setLastAddedKey] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
-    } catch {}
+    setItems(readCookie());
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {}
-  }, [items]);
+    if (hydrated) writeCookie(items);
+  }, [items, hydrated]);
 
-  const add = (id: number, qty = 1) => {
+  const add: CartContextValue["add"] = (line) => {
+    const qty = line.qty ?? 1;
+    const key = makeKey(line.productId, line.colorName, line.size);
     setItems((prev) => {
-      const found = prev.find((p) => p.id === id);
-      if (found) return prev.map((p) => (p.id === id ? { ...p, qty: p.qty + qty } : p));
-      return [...prev, { id, qty }];
+      const found = prev.find((p) => p.key === key);
+      if (found) return prev.map((p) => (p.key === key ? { ...p, qty: p.qty + qty } : p));
+      return [...prev, { ...line, qty, key }];
     });
-    setLastAddedId(id);
-    setTimeout(() => setLastAddedId(null), 600);
+    setLastAddedKey(key);
+    setTimeout(() => setLastAddedKey(null), 600);
   };
 
-  const remove = (id: number) => setItems((prev) => prev.filter((p) => p.id !== id));
-
-  const setQty = (id: number, qty: number) => {
-    if (qty <= 0) return remove(id);
-    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, qty } : p)));
+  const remove = (key: string) => setItems((prev) => prev.filter((p) => p.key !== key));
+  const setQty = (key: string, qty: number) => {
+    if (qty <= 0) return remove(key);
+    setItems((prev) => prev.map((p) => (p.key === key ? { ...p, qty } : p)));
   };
-
   const clear = () => setItems([]);
 
   const count = items.reduce((s, i) => s + i.qty, 0);
+  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
 
   return (
     <CartContext.Provider
       value={{
         items,
         count,
+        total,
         isOpen,
         open: () => setIsOpen(true),
         close: () => setIsOpen(false),
@@ -72,7 +108,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         remove,
         setQty,
         clear,
-        lastAddedId,
+        lastAddedKey,
       }}
     >
       {children}

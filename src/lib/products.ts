@@ -1,62 +1,128 @@
-import predator_club_fxg_if6344_tmavomodra_main_1Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-1.jpg";
-import predator_club_fxg_if6344_tmavomodra_main_2Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-2.jpg";
-import predator_club_fxg_if6344_tmavomodra_main_3Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-3.jpg";
-import predator_club_fxg_if6344_tmavomodra_main_4Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-4.jpg";
-import predator_club_fxg_if6344_tmavomodra_main_5Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-5.jpg";
-import predator_club_fxg_if6344_tmavomodra_main_6Img from "@/assets/predator-club-fxg-if6344-tmavomodra-main-6.jpg";
+// DB-backed types and helpers for products.
+import { supabase } from "@/integrations/supabase/client";
 
-export type ProductImage = { src: string; alt: string };
+export type VariantSelector = "color" | "image" | "none";
+
+export type ProductImage = { id?: string; src: string; alt: string; color_name?: string | null };
 
 export type ColorVariant = {
+  id?: string;
   name: string;
   hex: string;
   images: ProductImage[];
 };
 
 export type Product = {
-  id: number;
+  id: string;
   slug: string;
-  tags: string[];
   name: string;
   price: number;
+  description: string;
+  badge: string | null;
+  tags: string[];
+  details: string[];
+  sizes: string[];
+  variantSelector: VariantSelector;
   images: ProductImage[];
   colors: ColorVariant[];
-  badge: string | null;
-  description: string;
-  details: string[];
 };
 
-export const products: Product[] = [
-  {
-    id: 1,
-    slug: "predator-club-fxg-if6344-tmavomodra",
-    tags: ["Futbal", "Obuv", "Kopačky"],
-    name: "Predator Club Fxg IF6344 Tmavomodrá",
-    price: 35,
-    images: [
-      { src: predator_club_fxg_if6344_tmavomodra_main_1Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 1" },
-      { src: predator_club_fxg_if6344_tmavomodra_main_2Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 2" },
-      { src: predator_club_fxg_if6344_tmavomodra_main_3Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 3" },
-      { src: predator_club_fxg_if6344_tmavomodra_main_4Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 4" },
-      { src: predator_club_fxg_if6344_tmavomodra_main_5Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 5" },
-      { src: predator_club_fxg_if6344_tmavomodra_main_6Img, alt: "Predator Club Fxg IF6344 Tmavomodrá 6" },
-    ],
-    colors: [
-    ],
-    badge: "Použité",
-    description: "Obohaťte svoju hru vďaka futbalovým kopačkám adidas, vytvoreným s myšlienkou na športovcov. Vyrobené z vysokokvalitnej imitácie kože, ponúkajú vynikajúcu podporu a pohodlie. Šnurovanie zabezpečuje ideálne prispôsobenie, a mäkký textilný vnútrajšok garantuje komfort počas dlhých tréningov. Vybavené pokročilou vonkajšou podrážkou Controlplate 2.0, tieto topánky sú optimalizované na hru na prírodnom povrchu, čo umožňuje presné ovládanie lopty a spoľahlivú priľnavosť. --- POUŽITÉ!!! ---",
-    details: ["Použité: Ano", "Farba Výrobcu: Lucblu/Ftwwht/Solred", "Konštrukcia: Syntetický vrch so Strikeprint textúrovaním na vnútornej strane a penová vrstva pre pohodlie", "Povrch: FxG podrážka"],
-  },
-];
-
 export const formatPrice = (n: number): string =>
-  (n % 1 === 0 ? `${n}` : n.toFixed(2).replace('.', ',')) + ' €';
+  (n % 1 === 0 ? `${n}` : n.toFixed(2).replace(".", ",")) + " €";
 
-export function getProduct(slug: string): Product | undefined {
-  return products.find((p) => p.slug === slug);
+type ProductRow = {
+  id: string;
+  slug: string;
+  name: string;
+  price: number | string;
+  description: string;
+  badge: string | null;
+  tags: string[] | null;
+  details: string[] | null;
+  sizes: string[] | null;
+  variant_selector: string;
+  sort_order: number;
+};
+
+function mapProduct(
+  p: ProductRow,
+  images: { id: string; url: string; alt: string; color_name: string | null; sort_order: number }[],
+  colors: { id: string; name: string; hex: string; sort_order: number }[],
+): Product {
+  const sortedImages = [...images].sort((a, b) => a.sort_order - b.sort_order);
+  const defaultImages = sortedImages
+    .filter((i) => !i.color_name)
+    .map((i) => ({ id: i.id, src: i.url, alt: i.alt, color_name: null }));
+
+  const colorVariants: ColorVariant[] = [...colors]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      hex: c.hex,
+      images: sortedImages
+        .filter((i) => i.color_name === c.name)
+        .map((i) => ({ id: i.id, src: i.url, alt: i.alt, color_name: c.name })),
+    }));
+
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    price: Number(p.price),
+    description: p.description ?? "",
+    badge: p.badge,
+    tags: p.tags ?? [],
+    details: p.details ?? [],
+    sizes: p.sizes ?? [],
+    variantSelector: (p.variant_selector as VariantSelector) ?? "none",
+    images: defaultImages.length > 0 ? defaultImages : (colorVariants[0]?.images ?? []),
+    colors: colorVariants,
+  };
 }
 
-export function getImages(product: Product, colorName?: string): ProductImage[] {
+export async function fetchAllProducts(): Promise<Product[]> {
+  const { data: rows, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  if (!rows || rows.length === 0) return [];
+
+  const ids = rows.map((r) => r.id);
+  const [imgs, cols] = await Promise.all([
+    supabase.from("product_images").select("*").in("product_id", ids),
+    supabase.from("product_colors").select("*").in("product_id", ids),
+  ]);
+
+  return rows.map((r) =>
+    mapProduct(
+      r as ProductRow,
+      (imgs.data ?? []).filter((i) => i.product_id === r.id) as never,
+      (cols.data ?? []).filter((c) => c.product_id === r.id) as never,
+    ),
+  );
+}
+
+export async function fetchProductBySlug(slug: string): Promise<Product | null> {
+  const { data: row, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return null;
+  const [imgs, cols] = await Promise.all([
+    supabase.from("product_images").select("*").eq("product_id", row.id),
+    supabase.from("product_colors").select("*").eq("product_id", row.id),
+  ]);
+  return mapProduct(row as ProductRow, (imgs.data ?? []) as never, (cols.data ?? []) as never);
+}
+
+export function getImages(product: Product, colorName?: string | null): ProductImage[] {
   if (!colorName) return product.images;
-  return product.colors.find((c) => c.name === colorName)?.images ?? product.images;
+  const c = product.colors.find((c) => c.name === colorName);
+  if (c && c.images.length > 0) return c.images;
+  return product.images;
 }
