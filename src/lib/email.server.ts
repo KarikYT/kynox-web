@@ -3,7 +3,6 @@
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 
 function b64url(input: string): string {
-  // btoa handles Latin-1; we need UTF-8 safe encoding for Slovak chars
   const utf8 = unescape(encodeURIComponent(input));
   return btoa(utf8).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -11,7 +10,7 @@ function b64url(input: string): string {
 function siteOrigin(): string {
   return (
     process.env.PUBLIC_SITE_URL ||
-    "https://kynox-official.lovable.app"
+    "https://kynox.picore.eu"
   );
 }
 
@@ -41,27 +40,89 @@ export async function sendOrderEmail(params: {
   const itemsHtml = params.items
     .map(
       (i) =>
-        `<tr><td style="padding:6px 12px 6px 0">${escapeHtml(i.name)}${
-          i.colorName ? ` · ${escapeHtml(i.colorName)}` : ""
-        }${i.size ? ` · ${escapeHtml(i.size)}` : ""}</td>` +
-        `<td style="padding:6px 12px;text-align:right">×${i.qty}</td>` +
-        `<td style="padding:6px 0;text-align:right">${fmt(i.price * i.qty)}</td></tr>`,
+        `<tr style="border-bottom:1px solid #eee">` +
+        `<td style="padding:10px 0">${escapeHtml(i.name)}` +
+        (i.colorName ? `<span style="color:#888"> · ${escapeHtml(i.colorName)}</span>` : "") +
+        (i.size ? `<span style="color:#888"> · ${escapeHtml(i.size)}</span>` : "") +
+        `</td>` +
+        `<td style="padding:10px 12px;text-align:center;color:#555">×${i.qty}</td>` +
+        `<td style="padding:10px 0;text-align:right">${fmt(i.price * i.qty)}</td></tr>`,
     )
     .join("");
 
-  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#ffffff;color:#111;padding:24px">
-    <h2 style="margin:0 0 12px">Ďakujeme za objednávku</h2>
-    <p style="margin:0 0 8px">Tvoj kód objednávky:</p>
-    <p style="font-size:28px;letter-spacing:2px;margin:0 0 20px"><strong>${params.code}</strong></p>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
-      ${itemsHtml}
-      <tr><td colspan="3" style="border-top:1px solid #eee;padding-top:10px;text-align:right"><strong>Spolu: ${fmt(params.total)}</strong></td></tr>
-    </table>
-    <p style="margin:16px 0 8px"><strong>Platba prevodom:</strong></p>
-    <p style="margin:0">IBAN: <code>SK9402000000004746544651</code><br/>Variabilný symbol: <code>${params.code.replace(/[^0-9]/g, "")}</code></p>
-    <p style="margin:24px 0">Stav objednávky: <a href="${orderUrl}">${orderUrl}</a></p>
-    <p style="color:#888;font-size:12px;margin-top:32px">KYNOX</p>
-  </body></html>`;
+  const html = `<!doctype html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;color:#111">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#111;padding:24px 32px">
+            <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:3px">KYNOX</span>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr><td style="padding:32px">
+
+          <p style="margin:0 0 4px;font-size:14px;color:#666;text-transform:uppercase;letter-spacing:1px">Ďakujeme za objednávku</p>
+          <p style="margin:0 0 24px;font-size:28px;font-weight:700">${params.code}</p>
+
+          <!-- Items table -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse">
+            <thead>
+              <tr style="border-bottom:2px solid #111">
+                <th style="text-align:left;padding:0 0 8px;font-weight:600">Produkt</th>
+                <th style="text-align:center;padding:0 12px 8px;font-weight:600">Ks</th>
+                <th style="text-align:right;padding:0 0 8px;font-weight:600">Cena</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+            <tfoot>
+              <tr style="border-top:2px solid #111">
+                <td colspan="2" style="padding:12px 0 0;font-weight:700;font-size:15px">Spolu</td>
+                <td style="padding:12px 0 0;text-align:right;font-weight:700;font-size:15px">${fmt(params.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Payment block -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px">
+            <tr>
+              <td style="background:#f4f4f5;border-radius:6px;padding:20px 24px">
+                <p style="margin:0 0 12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#444">Platba prevodom</p>
+                <p style="margin:0 0 6px;font-size:13px;color:#555">IBAN</p>
+                <p style="margin:0 0 14px;font-size:15px;font-weight:600;font-family:monospace">SK94 0200 0000 0047 4654 4651</p>
+                <p style="margin:0 0 6px;font-size:13px;color:#555">Variabilný symbol</p>
+                <p style="margin:0;font-size:15px;font-weight:600;font-family:monospace">${params.code.replace(/[^0-9]/g, "")}</p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA -->
+          <p style="margin:28px 0 0;text-align:center">
+            <a href="${orderUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:.5px">Sledovať objednávku →</a>
+          </p>
+
+        </td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 32px;border-top:1px solid #eee;text-align:center;font-size:12px;color:#aaa">
+            © KYNOX · Ak máš otázky, odpovedaj na tento e-mail.
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
   const text = `Ďakujeme za objednávku.\nKód: ${params.code}\nSpolu: ${fmt(params.total)}\n\nPlatba prevodom:\nIBAN: SK9402000000004746544651\nVariabilný symbol: ${params.code.replace(/[^0-9]/g, "")}\n\nStav objednávky: ${orderUrl}\n`;
 
