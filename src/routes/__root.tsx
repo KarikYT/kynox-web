@@ -72,20 +72,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "KYNOX Web is a web application for Slovak language communication and learning." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "KYNOX Web is a web application for Slovak language communication and learning." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "KYNOX Web is a web application for Slovak language communication and learning." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/69a34d20-bc41-4426-9255-09e1a14f0060/id-preview-052de9e2--fa72c957-c08d-42d6-85ff-bd017e32dd82.lovable.app-1779027284802.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/69a34d20-bc41-4426-9255-09e1a14f0060/id-preview-052de9e2--fa72c957-c08d-42d6-85ff-bd017e32dd82.lovable.app-1779027284802.png" },
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: "KYNOX" },
+        { name: "description", content: "KYNOX — športové vybavenie a oblečenie pre každý šport." },
+        { name: "author", content: "KYNOX" },
+        { property: "og:title", content: "KYNOX" },
+        { property: "og:description", content: "KYNOX — športové vybavenie a oblečenie pre každý šport." },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: "https://kynox.picore.eu" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "KYNOX" },
+        { name: "twitter:description", content: "KYNOX — športové vybavenie a oblečenie pre každý šport." },
     ],
     links: [
       {
