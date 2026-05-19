@@ -1,10 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  getProduct,
+  fetchProductBySlug,
+  fetchAllProducts,
   getImages,
-  products,
   formatPrice,
   type Product,
 } from "@/lib/products";
@@ -14,19 +15,6 @@ import { QtyControl } from "@/components/cart-drawer";
 
 export const Route = createFileRoute("/store/$productSlug")({
   component: ProductPage,
-  loader: ({ params }) => {
-    const product = getProduct(params.productSlug);
-    if (!product) throw notFound();
-    return { product };
-  },
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.product.name} — KYNOX Store` },
-          { name: "description", content: loaderData.product.description },
-        ]
-      : [],
-  }),
   notFoundComponent: () => (
     <div className="min-h-screen grid place-items-center bg-background text-foreground px-6 text-center">
       <div>
@@ -43,26 +31,50 @@ export const Route = createFileRoute("/store/$productSlug")({
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData() as { product: Product };
-  const { add, open, items } = useCart();
+  const { productSlug } = Route.useParams();
+  const { data: product, isLoading } = useQuery({
+    queryKey: ["product", productSlug],
+    queryFn: () => fetchProductBySlug(productSlug),
+  });
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <SiteNav active="store" />
+        <div className="pt-32 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          Načítavam…
+        </div>
+      </div>
+    );
+  }
+  if (!product) throw notFound();
+  return <ProductView product={product} />;
+}
+
+function ProductView({ product }: { product: Product }) {
+  const { add, open, items } = useCart();
   const hasVariants = product.colors.length > 0;
   const selectorMode = product.variantSelector ?? (hasVariants ? "color" : "none");
   const showSelector = hasVariants && selectorMode !== "none";
 
   const [activeColor, setActiveColor] = useState<string | undefined>(
     hasVariants
-      ? product.colors.find((c) => c.images.length > 0)?.name ??
-        product.colors[0].name
-      : undefined
+      ? product.colors.find((c) => c.images.length > 0)?.name ?? product.colors[0].name
+      : undefined,
+  );
+  const [activeSize, setActiveSize] = useState<string | undefined>(
+    product.sizes.length > 0 ? undefined : undefined,
   );
 
   const galleryImages = getImages(product, activeColor);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  const inCart = items.find((i) => i.id === product.id)?.qty ?? 0;
+  const inCart = items
+    .filter((i) => i.productId === product.id)
+    .reduce((s, i) => s + i.qty, 0);
 
   function selectColor(name: string) {
     setActiveColor(name);
@@ -70,12 +82,37 @@ function ProductPage() {
   }
 
   function handleAdd() {
-    add(product.id, qty);
+    if (product.sizes.length > 0 && !activeSize) {
+      setErrMsg("Vyber veľkosť");
+      setTimeout(() => setErrMsg(null), 2000);
+      return;
+    }
+    const img = galleryImages[0];
+    if (!img) {
+      setErrMsg("Produkt nemá obrázok");
+      return;
+    }
+    const colorVariant = product.colors.find((c) => c.name === activeColor);
+    add({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      imageUrl: img.src,
+      colorName: activeColor ?? null,
+      colorImageUrl: colorVariant?.images[0]?.src ?? null,
+      size: activeSize ?? null,
+      qty,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }
 
-  const related = products.filter((p) => p.id !== product.id).slice(0, 3);
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchAllProducts,
+  });
+  const related = (allProducts as Product[]).filter((p) => p.id !== product.id).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
@@ -94,13 +131,18 @@ function ProductPage() {
             {/* Gallery */}
             <div className="animate-fade-up">
               <div className="relative aspect-square bg-card overflow-hidden border border-border">
-                <img
-                  key={`${activeColor ?? "default"}-${activeImg}`}
-                  src={galleryImages[activeImg]?.src ?? galleryImages[0].src}
-                  alt={galleryImages[activeImg]?.alt ?? galleryImages[0].alt}
-                  className="w-full h-full object-cover animate-scale-in"
-                />
-
+                {galleryImages[activeImg] ? (
+                  <img
+                    key={`${activeColor ?? "default"}-${activeImg}`}
+                    src={galleryImages[activeImg].src}
+                    alt={galleryImages[activeImg].alt}
+                    className="w-full h-full object-cover animate-scale-in"
+                  />
+                ) : (
+                  <div className="w-full h-full grid place-items-center text-muted-foreground font-mono text-xs">
+                    žiadny obrázok
+                  </div>
+                )}
                 {product.badge && (
                   <span className="absolute top-4 left-4 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-2 py-1">
                     {product.badge}
@@ -121,11 +163,7 @@ function ProductPage() {
                           : "border-border opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={image.src} alt={image.alt} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -160,20 +198,22 @@ function ProductPage() {
                 )}
               </div>
 
-              <p className="text-base sm:text-lg text-foreground/80 leading-relaxed mb-8">
+              <p className="text-base sm:text-lg text-foreground/80 leading-relaxed mb-8 whitespace-pre-wrap">
                 {product.description}
               </p>
 
-              <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-6">
-                {product.details.map((d) => (
-                  <li
-                    key={d}
-                    className="bg-background p-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
-                  >
-                    {d}
-                  </li>
-                ))}
-              </ul>
+              {product.details.length > 0 && (
+                <ul className="grid grid-cols-2 gap-px bg-border border border-border mb-6">
+                  {product.details.map((d) => (
+                    <li
+                      key={d}
+                      className="bg-background p-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                    >
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {showSelector && (
                 <div className="mb-8">
@@ -191,7 +231,6 @@ function ProductPage() {
                       {product.colors.map((c) => {
                         const isActive = c.name === activeColor;
                         const thumb = c.images[0];
-
                         return (
                           <button
                             key={c.name}
@@ -223,8 +262,6 @@ function ProductPage() {
                     <div className="flex flex-wrap gap-2">
                       {product.colors.map((c) => {
                         const isActive = c.name === activeColor;
-                        const empty = c.images.length === 0;
-
                         return (
                           <button
                             key={c.name}
@@ -236,17 +273,46 @@ function ProductPage() {
                                 : "border-border hover:border-foreground"
                             }`}
                             style={{ backgroundColor: c.hex }}
-                          >
-                            {empty && (
-                              <span className="absolute inset-0 rounded-full bg-background/60 grid place-items-center font-mono text-[8px] uppercase text-foreground">
-                                —
-                              </span>
-                            )}
-                          </button>
+                            aria-label={c.name}
+                          />
                         );
                       })}
                     </div>
                   )}
+                </div>
+              )}
+
+              {product.sizes.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Veľkosť
+                    </span>
+                    {activeSize && (
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/80">
+                        {activeSize}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((s) => {
+                      const isActive = s === activeSize;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setActiveSize(s)}
+                          className={`min-w-12 px-3 h-10 border-2 font-mono text-xs uppercase tracking-widest transition-all active:scale-95 ${
+                            isActive
+                              ? "border-primary bg-primary text-background"
+                              : "border-border hover:border-foreground"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -257,6 +323,12 @@ function ProductPage() {
                   </span>
                   <QtyControl value={qty} onChange={setQty} size="md" />
                 </div>
+
+                {errMsg && (
+                  <div className="bg-destructive/10 border border-destructive/40 text-destructive font-mono text-[10px] uppercase tracking-widest px-3 py-2 animate-fade-up">
+                    {errMsg}
+                  </div>
+                )}
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button
@@ -287,48 +359,48 @@ function ProductPage() {
                     Košík
                   </button>
                 </div>
-
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Doprava 2-4 dni. Platby zatiaľ neaktívne.
-                </p>
               </div>
             </div>
           </div>
 
-          {/* Related */}
-          <div className="mt-24 pt-12 border-t border-border">
-            <h2 className="font-display text-2xl sm:text-3xl uppercase italic mb-8">
-              Tiež brutálne
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-border border border-border">
-              {related.map((p) => (
-                <Link
-                  key={p.id}
-                  to="/store/$productSlug"
-                  params={{ productSlug: p.slug }}
-                  className="group bg-background flex flex-col"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-card">
-                    <img
-                      src={p.images[0].src}
-                      alt={p.images[0].alt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-
-                  <div className="p-4 border-t border-border flex justify-between items-end">
-                    <h3 className="font-display text-xl uppercase leading-none truncate">
-                      {p.name}
-                    </h3>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {formatPrice(p.price)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+          {related.length > 0 && (
+            <div className="mt-24 pt-12 border-t border-border">
+              <h2 className="font-display text-2xl sm:text-3xl uppercase italic mb-8">
+                Tiež brutálne
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-border border border-border">
+                {related.map((p) => {
+                  const img = p.images[0];
+                  return (
+                    <Link
+                      key={p.id}
+                      to="/store/$productSlug"
+                      params={{ productSlug: p.slug }}
+                      className="group bg-background flex flex-col"
+                    >
+                      <div className="relative aspect-square overflow-hidden bg-card">
+                        {img && (
+                          <img
+                            src={img.src}
+                            alt={img.alt}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          />
+                        )}
+                      </div>
+                      <div className="p-4 border-t border-border flex justify-between items-end">
+                        <h3 className="font-display text-xl uppercase leading-none truncate">
+                          {p.name}
+                        </h3>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {formatPrice(p.price)}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
     </div>

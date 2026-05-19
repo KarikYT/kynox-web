@@ -4,9 +4,9 @@ import { ShoppingBag, Menu, X } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 
 export function SiteNav({ active }: { active?: "home" | "store" }) {
-  const { count, open, lastAddedId } = useCart();
+  const { count, open, lastAddedKey } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
-  const bump = lastAddedId !== null;
+  const bump = lastAddedKey !== null;
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {

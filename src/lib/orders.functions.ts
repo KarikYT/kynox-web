@@ -110,17 +110,12 @@ export const listOrders = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw error;
     const ids = (orders ?? []).map((o) => o.id);
-    if (ids.length === 0) return { orders: [], itemsByOrder: {} as Record<string, unknown[]> };
+    if (ids.length === 0) return { orders: [], items: [] };
     const { data: items } = await supabase
       .from("order_items")
       .select("*")
       .in("order_id", ids);
-    const itemsByOrder: Record<string, unknown[]> = {};
-    for (const it of items ?? []) {
-      const arr = itemsByOrder[it.order_id] ?? (itemsByOrder[it.order_id] = []);
-      arr.push(it);
-    }
-    return { orders, itemsByOrder };
+    return { orders: orders ?? [], items: items ?? [] };
   });
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
