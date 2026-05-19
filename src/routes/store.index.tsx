@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useReveal } from "@/hooks/use-reveal";
-import { products, formatPrice } from "@/lib/products";
+import { fetchAllProducts, formatPrice, type Product } from "@/lib/products";
 import { useCart } from "@/context/cart-context";
 import { SiteNav } from "@/components/site-nav";
 
@@ -13,8 +14,7 @@ export const Route = createFileRoute("/store/")({
       { title: "KYNOX Store — Výbava pre tých, čo nezastavujú" },
       {
         name: "description",
-        content:
-          "KYNOX Store. Obuv, oblečenie a výbava staraná pre maximálny výkon.",
+        content: "KYNOX Store. Obuv, oblečenie a výbava staraná pre maximálny výkon.",
       },
     ],
   }),
@@ -40,6 +40,11 @@ function StorePage() {
   const [activeSport, setActiveSport] = useState("Všetko");
   const [activeSub, setActiveSub] = useState<string | null>(null);
 
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchAllProducts,
+  });
+
   function selectSport(sport: string) {
     setActiveSport(sport);
     setActiveSub(null);
@@ -47,7 +52,7 @@ function StorePage() {
 
   const subCategories = activeSport !== "Všetko" ? sportCatalog[activeSport] : [];
 
-  const visible = products.filter((p) => {
+  const visible = (products as Product[]).filter((p) => {
     if (activeSport === "Všetko") return true;
     if (!p.tags.includes(activeSport)) return false;
     if (activeSub) return p.tags.includes(activeSub);
@@ -58,7 +63,6 @@ function StorePage() {
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
       <SiteNav active="store" />
 
-      {/* Hero header */}
       <header className="pt-28 sm:pt-36 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-12 border-b border-border relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 -skew-x-12 translate-x-32 hidden lg:block" />
         <div className="max-w-7xl mx-auto relative">
@@ -79,7 +83,6 @@ function StorePage() {
         </div>
       </header>
 
-      {/* Sport filter */}
       <div className="sticky top-[72px] sm:top-[88px] z-40 bg-background/90 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3 pb-2 flex gap-2 sm:gap-3 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
           {Object.keys(sportCatalog).map((sport) => {
@@ -132,103 +135,100 @@ function StorePage() {
         )}
       </div>
 
-      {/* Products grid */}
       <main className="py-12 sm:py-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
-          {visible.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-32 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              Načítavam…
+            </div>
+          ) : visible.length === 0 ? (
             <div className="text-center py-32 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Žiadne produkty v tejto kategórii
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
-              {visible.map((p, idx) => (
-                <article
-                  key={p.id}
-                  className="bg-background group relative flex flex-col animate-fade-up hover-lift"
-                  style={{ animationDelay: `${idx * 80}ms` }}
-                >
-                  <Link
-                    to="/store/$productSlug"
-                    params={{ productSlug: p.slug }}
-                    className="relative aspect-square overflow-hidden bg-card block"
+              {visible.map((p, idx) => {
+                const img = p.images[0];
+                return (
+                  <article
+                    key={p.id}
+                    className="bg-background group relative flex flex-col animate-fade-up hover-lift"
+                    style={{ animationDelay: `${idx * 80}ms` }}
                   >
-                    <img
-                      src={p.images[0].src}
-                      alt={p.images[0].alt}
-                      width={700}
-                      height={700}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    {p.badge && (
-                      <span className="absolute top-4 left-4 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-2 py-1">
-                        {p.badge}
-                      </span>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="absolute bottom-4 right-4 font-mono text-[10px] uppercase tracking-widest text-background bg-foreground px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Zobraziť
-                    </span>
-                  </Link>
-                  <div className="p-5 sm:p-6 flex items-end justify-between gap-4 border-t border-border">
                     <Link
                       to="/store/$productSlug"
                       params={{ productSlug: p.slug }}
-                      className="min-w-0 flex-1"
+                      className="relative aspect-square overflow-hidden bg-card block"
                     >
-                      <div className="flex gap-2 flex-wrap mb-2">
-                        {p.tags.map((t) => (
-                          <span key={t} className="font-mono text-[10px] text-primary uppercase tracking-widest">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                      <h3 className="font-display text-2xl sm:text-3xl uppercase leading-none mb-1 truncate">
-                        {p.name}
-                      </h3>
-                      <p className="font-mono text-xs sm:text-sm text-muted-foreground">
-                        {formatPrice(p.price)}
-                      </p>
+                      {img ? (
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          width={700}
+                          height={700}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center text-muted-foreground font-mono text-xs">
+                          žiadny obrázok
+                        </div>
+                      )}
+                      {p.badge && (
+                        <span className="absolute top-4 left-4 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-2 py-1">
+                          {p.badge}
+                        </span>
+                      )}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        add(p.id, 1);
-                      }}
-                      aria-label={`Pridať ${p.name} do košíka`}
-                      className="shrink-0 grid place-items-center w-10 h-10 border border-primary text-primary hover:bg-primary hover:text-background transition-all active:scale-90"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </article>
-              ))}
+                    <div className="p-5 sm:p-6 flex items-end justify-between gap-4 border-t border-border">
+                      <Link
+                        to="/store/$productSlug"
+                        params={{ productSlug: p.slug }}
+                        className="min-w-0 flex-1"
+                      >
+                        <div className="flex gap-2 flex-wrap mb-2">
+                          {p.tags.map((t) => (
+                            <span key={t} className="font-mono text-[10px] text-primary uppercase tracking-widest">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <h3 className="font-display text-2xl sm:text-3xl uppercase leading-none mb-1 truncate">
+                          {p.name}
+                        </h3>
+                        <p className="font-mono text-xs sm:text-sm text-muted-foreground">
+                          {formatPrice(p.price)}
+                        </p>
+                      </Link>
+                      {p.sizes.length === 0 && p.colors.length === 0 && img && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            add({
+                              productId: p.id,
+                              slug: p.slug,
+                              name: p.name,
+                              price: p.price,
+                              imageUrl: img.src,
+                            });
+                          }}
+                          aria-label={`Pridať ${p.name} do košíka`}
+                          className="shrink-0 grid place-items-center w-10 h-10 border border-primary text-primary hover:bg-primary hover:text-background transition-all active:scale-90"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
       </main>
 
-      {/* CTA */}
-      <section id="join" className="bg-primary py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 text-center">
-          <span className="font-mono text-[10px] sm:text-xs text-background uppercase tracking-[0.3em] mb-4 sm:mb-6 block">
-            Store sa otvára čoskoro
-          </span>
-          <h2 className="font-display text-[clamp(2.5rem,9vw,8rem)] text-background leading-[0.9] uppercase mb-8 sm:mb-12 tracking-tighter italic">
-            Buď prvý.<br />Buď pripravený.
-          </h2>
-          <Link
-            to="/"
-            className="inline-block bg-background text-foreground font-display text-xl sm:text-3xl px-8 sm:px-16 py-5 sm:py-7 uppercase hover:scale-105 transition-transform"
-          >
-            Späť do labu
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
       <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-border">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8">
           <div>

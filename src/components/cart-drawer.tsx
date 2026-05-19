@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import { products, formatPrice } from "@/lib/products";
+import { formatPrice } from "@/lib/products";
 
 export function CartDrawer() {
-  const { isOpen, close, items, setQty, remove, clear } = useCart();
-  const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null);
+  const { isOpen, close, items, setQty, remove, clear, total } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -20,19 +20,9 @@ export function CartDrawer() {
     };
   }, [isOpen, close]);
 
-  const rows = items
-    .map((i) => {
-      const p = products.find((pr) => pr.id === i.id);
-      if (!p) return null;
-      return { ...i, product: p };
-    })
-    .filter(Boolean) as Array<{ id: number; qty: number; product: (typeof products)[number] }>;
-
-  const total = rows.reduce((s, r) => s + r.product.price * r.qty, 0);
-
   function handleCheckout() {
-    setCheckoutMsg("Platby zatiaľ nie sú aktívne. Coming soon.");
-    setTimeout(() => setCheckoutMsg(null), 3500);
+    close();
+    navigate({ to: "/cart" });
   }
 
   return (
@@ -48,7 +38,6 @@ export function CartDrawer() {
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-5 border-b border-border">
           <div>
             <span className="font-mono text-[10px] text-primary uppercase tracking-[0.3em] block">
@@ -68,9 +57,8 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {/* Items */}
         <div className="flex-1 overflow-y-auto">
-          {rows.length === 0 ? (
+          {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-6 text-center gap-4">
               <div className="font-display text-5xl uppercase italic text-muted-foreground">
                 Prázdne.
@@ -88,46 +76,55 @@ export function CartDrawer() {
             </div>
           ) : (
             <ul>
-              {rows.map((r, idx) => (
+              {items.map((r, idx) => (
                 <li
-                  key={r.id}
+                  key={r.key}
                   className="flex gap-4 p-4 sm:p-5 border-b border-border animate-fade-up"
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                   <Link
                     to="/store/$productSlug"
-                    params={{ productSlug: r.product.slug }}
+                    params={{ productSlug: r.slug }}
                     onClick={close}
                     className="shrink-0 w-20 h-24 overflow-hidden bg-card"
                   >
-                    <img
-                      src={r.product.images[0].src}
-                      alt={r.product.images[0].alt}
-                      className="w-full h-full object-cover hover:grayscale-0 transition-all"
-                    />
+                    <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" />
                   </Link>
 
                   <div className="flex-1 min-w-0 flex flex-col">
                     <Link
                       to="/store/$productSlug"
-                      params={{ productSlug: r.product.slug }}
+                      params={{ productSlug: r.slug }}
                       onClick={close}
                       className="font-display text-lg uppercase leading-none truncate hover:text-primary transition-colors"
                     >
-                      {r.product.name}
+                      {r.name}
                     </Link>
-                    <span className="font-mono text-[10px] text-primary uppercase tracking-widest mt-1">
-                      {r.product.tags.join(" / ")}
-                    </span>
+                    {(r.colorName || r.size) && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {r.colorImageUrl ? (
+                          <img
+                            src={r.colorImageUrl}
+                            alt={r.colorName ?? ""}
+                            className="w-5 h-5 object-cover border border-border"
+                          />
+                        ) : null}
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+                          {[r.colorName, r.size ? `Veľ. ${r.size}` : null]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between gap-2 mt-2">
                       <QtyControl
                         value={r.qty}
-                        onChange={(q) => setQty(r.id, q)}
-                        onRemove={() => remove(r.id)}
+                        onChange={(q) => setQty(r.key, q)}
+                        onRemove={() => remove(r.key)}
                       />
                       <span className="font-mono text-sm tabular-nums">
-                        {formatPrice(r.product.price * r.qty)}
+                        {formatPrice(r.price * r.qty)}
                       </span>
                     </div>
                   </div>
@@ -137,8 +134,7 @@ export function CartDrawer() {
           )}
         </div>
 
-        {/* Footer */}
-        {rows.length > 0 && (
+        {items.length > 0 && (
           <div className="border-t border-border p-5 sm:p-6 space-y-4">
             <div className="flex items-end justify-between">
               <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -149,18 +145,12 @@ export function CartDrawer() {
               </span>
             </div>
 
-            {checkoutMsg && (
-              <div className="bg-primary/10 border border-primary/40 text-primary font-mono text-[10px] uppercase tracking-widest px-3 py-2 animate-fade-up">
-                {checkoutMsg}
-              </div>
-            )}
-
             <button
               type="button"
               onClick={handleCheckout}
               className="w-full bg-primary text-background font-display text-xl sm:text-2xl uppercase py-4 hover:scale-[1.02] active:scale-95 transition-transform"
             >
-              Zaplatiť
+              Objednať
             </button>
             <button
               type="button"
@@ -188,14 +178,11 @@ export function QtyControl({
   size?: "sm" | "md";
 }) {
   const [local, setLocal] = useState(String(value));
-
   useEffect(() => setLocal(String(value)), [value]);
-
   const dims =
     size === "md"
       ? { btn: "w-10 h-10", input: "w-14 h-10 text-base" }
       : { btn: "w-8 h-8", input: "w-10 h-8 text-xs" };
-
   return (
     <div className="inline-flex items-center border border-border">
       <button
@@ -213,18 +200,13 @@ export function QtyControl({
         type="text"
         inputMode="numeric"
         value={local}
-        onChange={(e) => {
-          const v = e.target.value.replace(/[^0-9]/g, "");
-          setLocal(v);
-        }}
+        onChange={(e) => setLocal(e.target.value.replace(/[^0-9]/g, ""))}
         onBlur={() => {
           const n = parseInt(local, 10);
           if (!Number.isFinite(n) || n <= 0) {
             if (onRemove) onRemove();
             else onChange(1);
-          } else {
-            onChange(Math.min(n, 99));
-          }
+          } else onChange(Math.min(n, 99));
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
