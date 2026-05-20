@@ -169,14 +169,13 @@ function emptyDraft(): ProductDraft {
 }
 
 function productToDraft(p: Product): ProductDraft {
-  // Combine default images (color_name null) + all per-color images
-  const defaults = p.images
-    .filter((i) => !i.color_name)
-    .map((i) => ({ url: i.src, alt: i.alt, color_name: "" }));
-  const colorImgs = p.colors.flatMap((c) =>
-    c.images.map((i) => ({ url: i.src, alt: i.alt, color_name: c.name })),
-  );
-  const allImages = [...defaults, ...colorImgs];
+  // Combine default images + all per-color images so editing preserves them
+  const allImages = [
+    ...p.images.map((i) => ({ url: i.src, alt: i.alt, color_name: "" })),
+    ...p.colors.flatMap((c) =>
+      c.images.map((i) => ({ url: i.src, alt: i.alt, color_name: c.name })),
+    ),
+  ];
   return {
     id: p.id,
     slug: p.slug,
