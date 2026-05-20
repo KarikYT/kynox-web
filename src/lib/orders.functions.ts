@@ -137,3 +137,18 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export const deleteOrder = async ({ data }: { data: { id: string } }) => {
+  // Najprv vymažeme položky objednávky
+  const { error: itemsError } = await supabase
+    .from("order_items")
+    .delete()
+    .eq("order_id", data.id);
+  if (itemsError) throw new Error(itemsError.message);
+
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", data.id);
+  if (error) throw new Error(error.message);
+};
