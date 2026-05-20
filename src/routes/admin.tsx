@@ -247,13 +247,31 @@ function ProductForm({
     setDraft((d) => ({ ...d, colors: [...d.colors, { name: "", hex: "#000000" }] }));
   }
   function removeColor(idx: number) {
-    setDraft((d) => ({ ...d, colors: d.colors.filter((_, i) => i !== idx) }));
+    setDraft((d) => {
+      const removed = d.colors[idx]?.name;
+      return {
+        ...d,
+        colors: d.colors.filter((_, i) => i !== idx),
+        // Detach images that referenced the removed color → become default images
+        images: d.images.map((img) =>
+          img.color_name === removed ? { ...img, color_name: "" } : img,
+        ),
+      };
+    });
   }
   function updateColor(idx: number, key: "name" | "hex", val: string) {
-    setDraft((d) => ({
-      ...d,
-      colors: d.colors.map((c, i) => (i === idx ? { ...c, [key]: val } : c)),
-    }));
+    setDraft((d) => {
+      const oldName = d.colors[idx]?.name;
+      const newColors = d.colors.map((c, i) => (i === idx ? { ...c, [key]: val } : c));
+      // If the name changed, rename it on every image that referenced the old name
+      const newImages =
+        key === "name" && oldName && oldName !== val
+          ? d.images.map((img) =>
+              img.color_name === oldName ? { ...img, color_name: val } : img,
+            )
+          : d.images;
+      return { ...d, colors: newColors, images: newImages };
+    });
   }
 
   async function handleSave() {
