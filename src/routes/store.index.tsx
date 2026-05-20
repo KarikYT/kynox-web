@@ -23,7 +23,7 @@ export const Route = createFileRoute("/store/")({
 const sportCatalog: Record<string, string[]> = {
   "Všetko":    [],
   "Futbal":    ["Kopačky", "Obuv", "Hydratácia", "Dresy", "Lopty", "Chrániče"],
-  "Hokej":     ["Hokejky", "Korčule", "Helmy", "Rukavice", "Chrániče"],
+  "Hokej":     ["Hokejky", "Pásky", "Korčule", "Helmy", "Rukavice", "Chrániče"],
   "Tenis":     ["Rakety", "Loptičky", "Obuv", "Oblečenie"],
   "F1":        ["Helmy", "Rukavice", "Oblečenie", "Doplnky"],
   "Box":       ["Boxerské rukavice", "Chrániče", "Vrecia", "Oblečenie"],
