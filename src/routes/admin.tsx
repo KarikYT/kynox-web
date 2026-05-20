@@ -169,9 +169,11 @@ function emptyDraft(): ProductDraft {
 }
 
 function productToDraft(p: Product): ProductDraft {
-  // Combine default images + all per-color images so editing preserves them
+  // Only include p.images as "default" if they truly have no color_name
+  // (p.images can fall back to first color's images in mapProduct → would duplicate)
+  const defaultOnly = p.images.filter((i) => !i.color_name);
   const allImages = [
-    ...p.images.map((i) => ({ url: i.src, alt: i.alt, color_name: "" })),
+    ...defaultOnly.map((i) => ({ url: i.src, alt: i.alt, color_name: "" })),
     ...p.colors.flatMap((c) =>
       c.images.map((i) => ({ url: i.src, alt: i.alt, color_name: c.name })),
     ),
