@@ -144,16 +144,14 @@ export const deleteOrder = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ id: z.string().uuid() }).parse(input)
   )
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
-
-    const { error: itemsError } = await supabase
+  .handler(async ({ data }) => {
+    const { error: itemsError } = await supabaseAdmin
       .from("order_items")
       .delete()
       .eq("order_id", data.id);
     if (itemsError) throw new Error(itemsError.message);
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("orders")
       .delete()
       .eq("id", data.id);
