@@ -53,12 +53,12 @@ function StorePage() {
 
   const subCategories = activeSport !== "Všetko" ? sportCatalog[activeSport] : [];
 
-  const visible = (products as Product[]).filter((p) => {
-    if (activeSport === "Všetko") return true;
-    if (!p.tags.includes(activeSport)) return false;
-    if (activeSub) return p.tags.includes(activeSub);
-    return true;
-  });
+const visible = (products as Product[]).filter((p) => {
+  if (activeSport === "Všetko") return !p.tags.some((t) => t.startsWith("!"));
+  if (!p.tags.includes(activeSport)) return false;
+  if (activeSub) return p.tags.includes(activeSub);
+  return true;
+});
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
