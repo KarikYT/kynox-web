@@ -3,6 +3,8 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendOrderEmail } from "./email.server";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const ItemSchema = z.object({
   productId: z.string().uuid().nullable().optional(),
