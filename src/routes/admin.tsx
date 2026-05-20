@@ -7,7 +7,7 @@ import {
   saveProduct,
   deleteProduct,
 } from "@/lib/admin.functions";
-import { listOrders, updateOrderStatus } from "@/lib/orders.functions";
+import { listOrders, updateOrderStatus, deleteOrder } from "@/lib/orders.functions";
 import { fetchAllProducts, formatPrice, type Product } from "@/lib/products";
 import {
   Loader2,
@@ -770,7 +770,9 @@ function OrdersTab() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -797,6 +799,19 @@ function OrdersTab() {
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
     } finally {
       setUpdating(null);
+    }
+  }
+
+   async function handleDelete(id: string) {
+   if (!confirm("Naozaj chceš vymazať túto objednávku?")) return;
+   setDeleting(id);
+   try {
+     await deleteOrder({ data: { id } });
+     setOrders((prev) => prev.filter((o) => o.id !== id));
+     setItems((prev) => prev.filter((i) => i.order_id !== id));
+     if (expanded === id) setExpanded(null);
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -922,6 +937,20 @@ function OrdersTab() {
                       {updating === o.id && (
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(o.id)}
+                        disabled={deleting === o.id}
+                        className="ml-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border border-destructive/50 text-destructive px-3 py-1.5 hover:bg-destructive hover:text-background transition-all disabled:opacity-50"
+                      >
+                        {deleting === o.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
+                        Vymazať objednávku
+                      </button>
                     </div>
                   </div>
                 )}
