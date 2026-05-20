@@ -169,6 +169,13 @@ function emptyDraft(): ProductDraft {
 }
 
 function productToDraft(p: Product): ProductDraft {
+  // Combine default images + all per-color images so editing preserves them
+  const allImages = [
+    ...p.images.map((i) => ({ url: i.src, alt: i.alt, color_name: "" })),
+    ...p.colors.flatMap((c) =>
+      c.images.map((i) => ({ url: i.src, alt: i.alt, color_name: c.name })),
+    ),
+  ];
   return {
     id: p.id,
     slug: p.slug,
@@ -180,9 +187,9 @@ function productToDraft(p: Product): ProductDraft {
     details: p.details.join("\n"),
     sizes: p.sizes.join(", "),
     variant_selector: p.variantSelector,
-    sort_order: "0",
+    sort_order: String(p.sortOrder ?? 0),
     colors: p.colors.map((c) => ({ name: c.name, hex: c.hex })),
-    images: p.images.map((i) => ({ url: i.src, alt: i.alt, color_name: i.color_name ?? "" })),
+    images: allImages,
   };
 }
 
