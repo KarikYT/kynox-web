@@ -23,6 +23,7 @@ export type Product = {
   details: string[];
   sizes: string[];
   variantSelector: VariantSelector;
+  sortOrder: number;
   images: ProductImage[];
   colors: ColorVariant[];
 };
