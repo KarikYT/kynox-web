@@ -77,6 +77,7 @@ function mapProduct(
     details: p.details ?? [],
     sizes: p.sizes ?? [],
     variantSelector: (p.variant_selector as VariantSelector) ?? "none",
+    sortOrder: p.sort_order ?? 0,
     images: defaultImages.length > 0 ? defaultImages : (colorVariants[0]?.images ?? []),
     colors: colorVariants,
   };
