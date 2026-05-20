@@ -26,7 +26,7 @@ const sportCatalog: Record<string, string[]> = {
   "Hokej":     ["Hokejky", "Pásky", "Korčule", "Helmy", "Rukavice", "Chrániče"],
   "Tenis":     ["Rakety", "Loptičky", "Obuv", "Oblečenie"],
   "F1":        ["Helmy", "Rukavice", "Oblečenie", "Doplnky"],
-  "Box":       ["Boxerské rukavice", "Chrániče", "Vrecia", "Oblečenie"],
+  "Box":       ["Boxerské rukavice", "Chrániče", "Zubný chránič", "Vrecia", "Oblečenie"],
   "Baseball":  ["Pálky", "Lopty", "Helmy", "Rukavice"],
   "Ping pong": ["Pálky", "Loptičky", "Stoly", "Siete"],
   "Volejbal":  ["Lopty", "Obuv", "Sieťky", "Chrániče kolien"],
