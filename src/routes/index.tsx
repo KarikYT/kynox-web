@@ -61,15 +61,15 @@ function Index() {
               <p className="max-w-md text-base sm:text-xl font-medium text-balance text-foreground/90">
                 Protokoly stavané pre tých, čo nehľadajú pohodlie. Surová sila, neúprosný tempo, žiadne kompromisy.
               </p>
-              <a href="#join" className="inline-block">
+              <Link to="/store" className="inline-block">
                 <button className="bg-primary text-background font-display text-lg sm:text-2xl px-8 sm:px-12 py-3 sm:py-4 uppercase skew-x-[-12deg] hover:bg-primary-dark transition-all w-full md:w-auto">
-                  <span className="block skew-x-[12deg] whitespace-nowrap">Vstúp do labu</span>
+                  <span className="block skew-x-[12deg] whitespace-nowrap">Do obchodu</span>
                 </button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
-
+              
         <div className="absolute bottom-0 w-full bg-primary text-background py-2 overflow-hidden whitespace-nowrap border-y border-primary">
           <div className="flex gap-8 sm:gap-12 font-mono text-xs sm:text-sm font-bold uppercase animate-ticker w-max">
             {[...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems].map((t, i) => (
