@@ -15,7 +15,7 @@ const STATUS_STEPS: { key: OrderStatus; label: string; icon: React.FC<any> }[] =
   { key: "caka_na_platbu", label: "Čaká na platbu", icon: Clock },
   { key: "zaplatene", label: "Zaplatené", icon: CircleDollarSign },
   { key: "spracovava_sa", label: "Spracováva sa", icon: Package },
-  { key: "poslane", label: "Posláne", icon: Truck },
+  { key: "poslane", label: "Poslané", icon: Truck },
   { key: "dorucene", label: "Doručené", icon: CheckCircle2 },
 ];
 
