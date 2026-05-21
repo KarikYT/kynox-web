@@ -70,9 +70,14 @@ export type Database = {
           address: string
           code: string
           created_at: string
+          delivery_method: string
           email: string
           id: string
+          packeta_point_address: string | null
+          packeta_point_id: string | null
+          packeta_point_name: string | null
           phone: string
+          sent_status_emails: string[]
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
@@ -81,9 +86,14 @@ export type Database = {
           address?: string
           code: string
           created_at?: string
+          delivery_method?: string
           email: string
           id?: string
+          packeta_point_address?: string | null
+          packeta_point_id?: string | null
+          packeta_point_name?: string | null
           phone?: string
+          sent_status_emails?: string[]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
@@ -92,9 +102,14 @@ export type Database = {
           address?: string
           code?: string
           created_at?: string
+          delivery_method?: string
           email?: string
           id?: string
+          packeta_point_address?: string | null
+          packeta_point_id?: string | null
+          packeta_point_name?: string | null
           phone?: string
+          sent_status_emails?: string[]
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
