@@ -205,7 +205,7 @@ function Index() {
           <h2 className="font-display text-[clamp(2.75rem,11vw,10rem)] text-background leading-[0.9] uppercase mb-8 sm:mb-12 tracking-tighter break-words">
             Žiadne výhovorky.<br />Iba výkon.
           </h2>
-          <button className="bg-background text-foreground font-display text-xl sm:text-3xl md:text-4xl px-8 sm:px-16 md:px-20 py-5 sm:py-7 md:py-8 uppercase hover:scale-105 hover:tracking-wide transition-all duration-500 w-full sm:w-auto animate-pulse-glow" onclick="window.location.href='store'>
+          <button onclick="window.location.href='store' className="bg-background text-foreground font-display text-xl sm:text-3xl md:text-4xl px-8 sm:px-16 md:px-20 py-5 sm:py-7 md:py-8 uppercase hover:scale-105 hover:tracking-wide transition-all duration-500 w-full sm:w-auto animate-pulse-glow">
             Do obchodu
           </button>
         </div>
