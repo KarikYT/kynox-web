@@ -32,7 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
   caka_na_platbu: "Čaká na platbu",
   zaplatene: "Zaplatené",
   spracovava_sa: "Spracováva sa",
-  poslane: "Posláne",
+  poslane: "Poslané",
   dorucene: "Doručené",
 };
 const STATUS_COLORS: Record<string, string> = {
