@@ -926,7 +926,7 @@ function OrdersTab() {
                       </table>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         Stav:
                       </span>
@@ -945,6 +945,20 @@ function OrdersTab() {
                       {updating === o.id && (
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       )}
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={!!sendEmail[o.id]}
+                          onChange={(e) =>
+                            setSendEmail((prev) => ({ ...prev, [o.id]: e.target.checked }))
+                          }
+                          className="w-4 h-4 accent-primary cursor-pointer"
+                        />
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Poslať email pri zmene
+                        </span>
+                      </label>
 
                       <button
                         type="button"
@@ -965,6 +979,12 @@ function OrdersTab() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-foreground text-background font-mono text-xs px-4 py-3 shadow-lg border border-border">
+          {toast}
         </div>
       )}
     </>
