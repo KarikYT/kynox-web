@@ -754,6 +754,10 @@ type OrderRow = {
   total: number | string;
   status: string;
   created_at: string;
+  delivery_method?: string | null;
+  packeta_point_id?: string | null;
+  packeta_point_name?: string | null;
+  packeta_point_address?: string | null;
 };
 type OrderItemRow = {
   order_id: string;
