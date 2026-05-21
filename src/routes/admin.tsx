@@ -754,6 +754,10 @@ type OrderRow = {
   total: number | string;
   status: string;
   created_at: string;
+  delivery_method?: string | null;
+  packeta_point_id?: string | null;
+  packeta_point_name?: string | null;
+  packeta_point_address?: string | null;
 };
 type OrderItemRow = {
   order_id: string;
@@ -772,7 +776,8 @@ function OrdersTab() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  
+  const [sendEmail, setSendEmail] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -792,11 +797,18 @@ function OrdersTab() {
 
   async function changeStatus(id: string, status: string) {
     setUpdating(id);
+    const shouldSend = !!sendEmail[id];
     try {
-      await updateOrderStatus({
-        data: { id, status: status as any },
+      const res = await updateOrderStatus({
+        data: { id, status: status as any, sendEmail: shouldSend },
       });
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+      // Reset checkbox after status change
+      setSendEmail((prev) => ({ ...prev, [id]: false }));
+      if (shouldSend) {
+        setToast(res.emailSent ? "Email odoslaný ✓" : "Email už bol odoslaný skôr (preskočené)");
+        setTimeout(() => setToast(null), 3000);
+      }
     } finally {
       setUpdating(null);
     }
@@ -878,8 +890,18 @@ function OrdersTab() {
                         label="Dátum"
                         value={new Date(o.created_at).toLocaleString("sk-SK")}
                       />
+                      <InfoBlock
+                        label="Doručenie"
+                        value={
+                          o.delivery_method === "packeta"
+                            ? `Packeta${o.packeta_point_name ? ` · ${o.packeta_point_name}` : ""}${o.packeta_point_id ? ` (#${o.packeta_point_id})` : ""}${o.packeta_point_address ? `\n${o.packeta_point_address}` : ""}`
+                            : "Na adresu"
+                        }
+                        className="sm:col-span-3"
+                      />
                       <InfoBlock label="Adresa" value={o.address} className="sm:col-span-3" />
                     </div>
+
 
                     <div>
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
@@ -918,7 +940,7 @@ function OrdersTab() {
                       </table>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         Stav:
                       </span>
@@ -937,6 +959,20 @@ function OrdersTab() {
                       {updating === o.id && (
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       )}
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={!!sendEmail[o.id]}
+                          onChange={(e) =>
+                            setSendEmail((prev) => ({ ...prev, [o.id]: e.target.checked }))
+                          }
+                          className="w-4 h-4 accent-primary cursor-pointer"
+                        />
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Poslať email pri zmene
+                        </span>
+                      </label>
 
                       <button
                         type="button"
@@ -959,6 +995,12 @@ function OrdersTab() {
           })}
         </div>
       )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-foreground text-background font-mono text-xs px-4 py-3 shadow-lg border border-border">
+          {toast}
+        </div>
+      )}
     </>
   );
 }
@@ -977,7 +1019,7 @@ function InfoBlock({
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-0.5">
         {label}
       </span>
-      <span className="font-mono text-xs break-words">{value}</span>
+      <span className="font-mono text-xs break-words whitespace-pre-line">{value}</span>
     </div>
   );
 }

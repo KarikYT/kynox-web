@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendOrderEmail } from "./email.server";
+import { sendOrderEmail, sendStatusEmail, type OrderStatus } from "./email.server";
 
 
 const ItemSchema = z.object({
@@ -21,6 +21,10 @@ const CreateOrderSchema = z.object({
   address: z.string().min(3).max(1000),
   consent: z.literal(true),
   items: z.array(ItemSchema).min(1).max(50),
+  deliveryMethod: z.enum(["packeta", "address"]).default("packeta"),
+  packetaPointId: z.string().max(50).nullable().optional(),
+  packetaPointName: z.string().max(255).nullable().optional(),
+  packetaPointAddress: z.string().max(500).nullable().optional(),
 });
 
 function makeCode(): string {
@@ -45,6 +49,10 @@ export const createOrder = createServerFn({ method: "POST" })
         address: data.address,
         total,
         status: "caka_na_platbu",
+        delivery_method: data.deliveryMethod,
+        packeta_point_id: data.packetaPointId ?? null,
+        packeta_point_name: data.packetaPointName ?? null,
+        packeta_point_address: data.packetaPointAddress ?? null,
       })
       .select()
       .single();
@@ -126,6 +134,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         status: z.enum(["caka_na_platbu", "zaplatene", "spracovava_sa", "poslane", "dorucene"]),
+        sendEmail: z.boolean().optional().default(false),
       })
       .parse(input),
   )
@@ -136,8 +145,42 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .update({ status: data.status })
       .eq("id", data.id);
     if (error) throw error;
-    return { ok: true };
+
+    let emailSent = false;
+    const emailable: OrderStatus[] = ["zaplatene", "spracovava_sa", "poslane", "dorucene"];
+    if (data.sendEmail && (emailable as string[]).includes(data.status)) {
+      // Check if email for this status was already sent — use admin to read full row
+      const { data: row } = await supabaseAdmin
+        .from("orders")
+        .select("email, code, sent_status_emails")
+        .eq("id", data.id)
+        .single();
+      if (row) {
+        const sent: string[] = (row.sent_status_emails as string[] | null) ?? [];
+        if (!sent.includes(data.status)) {
+          try {
+            await sendStatusEmail({
+              to: row.email,
+              code: row.code,
+              status: data.status as OrderStatus,
+            });
+            await supabaseAdmin
+              .from("orders")
+              .update({ sent_status_emails: [...sent, data.status] })
+              .eq("id", data.id);
+            emailSent = true;
+          } catch (e) {
+            console.error("Status email failed:", e);
+          }
+        }
+      }
+    }
+    return { ok: true, emailSent };
   });
+
+export const getPacketaApiKey = createServerFn({ method: "GET" }).handler(async () => {
+  return { apiKey: process.env.PACKETA_API_KEY ?? "" };
+});
 
 export const deleteOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

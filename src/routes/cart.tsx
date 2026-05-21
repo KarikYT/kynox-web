@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Loader2, ShoppingBag, MapPin, Home, Check } from "lucide-react";
 import { useCart } from "@/context/cart-context";
-import { createOrder } from "@/lib/orders.functions";
+import { createOrder, getPacketaApiKey } from "@/lib/orders.functions";
 import { formatPrice } from "@/lib/products";
 import { SiteNav } from "@/components/site-nav";
 
@@ -12,6 +12,29 @@ export const Route = createFileRoute("/cart")({
 
 const inputCls =
   "w-full bg-card border border-border px-4 py-3 font-mono text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50";
+
+type PacketaPoint = {
+  id: string;
+  name: string;
+  street?: string;
+  city?: string;
+  zip?: string;
+  country?: string;
+};
+
+declare global {
+  interface Window {
+    Packeta?: {
+      Widget: {
+        pick: (
+          apiKey: string,
+          callback: (point: any) => void,
+          options?: Record<string, any>,
+        ) => void;
+      };
+    };
+  }
+}
 
 function CartPage() {
   const { items, total, clear } = useCart();
@@ -24,6 +47,54 @@ function CartPage() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [deliveryMethod, setDeliveryMethod] = useState<"packeta" | "address">("packeta");
+  const [packetaPoint, setPacketaPoint] = useState<PacketaPoint | null>(null);
+  const [packetaKey, setPacketaKey] = useState<string>("");
+  const [widgetReady, setWidgetReady] = useState(false);
+
+  // Load Packeta widget script + api key
+  useEffect(() => {
+    getPacketaApiKey()
+      .then((res) => setPacketaKey(res.apiKey))
+      .catch(() => setPacketaKey(""));
+
+    if (typeof window !== "undefined" && !window.Packeta) {
+      const s = document.createElement("script");
+      s.src = "https://widget.packeta.com/v6/www/js/library.js";
+      s.async = true;
+      s.onload = () => setWidgetReady(true);
+      document.body.appendChild(s);
+    } else if (window.Packeta) {
+      setWidgetReady(true);
+    }
+  }, []);
+
+  function openPacketaWidget() {
+    if (!packetaKey) {
+      setErr("Chýba Packeta API kľúč.");
+      return;
+    }
+    if (!window.Packeta?.Widget) {
+      setErr("Widget Packety sa ešte načítava, skús to o chvíľu.");
+      return;
+    }
+    window.Packeta.Widget.pick(
+      packetaKey,
+      (point: any) => {
+        if (!point) return;
+        setPacketaPoint({
+          id: String(point.id),
+          name: point.name ?? point.nameStreet ?? "",
+          street: point.street,
+          city: point.city,
+          zip: point.zip,
+          country: point.country,
+        });
+      },
+      { country: "sk,cz", language: "sk" },
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!consent) {
@@ -34,15 +105,33 @@ function CartPage() {
       setErr("Košík je prázdny.");
       return;
     }
+    if (deliveryMethod === "packeta" && !packetaPoint) {
+      setErr("Vyber odberné miesto Packeta.");
+      return;
+    }
     setSubmitting(true);
     setErr(null);
     try {
+      const deliverySummary =
+        deliveryMethod === "packeta" && packetaPoint
+          ? `Packeta: ${packetaPoint.name}${packetaPoint.street ? `, ${packetaPoint.street}` : ""}${packetaPoint.city ? `, ${packetaPoint.city}` : ""}${packetaPoint.zip ? ` ${packetaPoint.zip}` : ""}`
+          : address;
+
       const result = await createOrder({
         data: {
           email,
           phone,
-          address,
+          address: deliverySummary,
           consent: true,
+          deliveryMethod,
+          packetaPointId: packetaPoint?.id ?? null,
+          packetaPointName: packetaPoint?.name ?? null,
+          packetaPointAddress:
+            packetaPoint
+              ? [packetaPoint.street, packetaPoint.city, packetaPoint.zip]
+                  .filter(Boolean)
+                  .join(", ")
+              : null,
           items: items.map((i) => ({
             productId: i.productId,
             name: i.name,
@@ -129,19 +218,95 @@ function CartPage() {
                 />
               </div>
 
+              {/* Delivery method */}
               <div>
-                <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-1.5">
-                  Doručovacia adresa <span className="text-primary">*</span>
+                <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
+                  Spôsob doručenia <span className="text-primary">*</span>
                 </label>
-                <textarea
-                  rows={3}
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={"Meno Priezvisko\nUlica č. 1\n080 01 Prešov"}
-                  required
-                  className={inputCls + " resize-none"}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod("packeta")}
+                    className={`flex items-center gap-2 px-4 py-3 border font-mono text-xs uppercase tracking-widest transition-all ${
+                      deliveryMethod === "packeta"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-card text-muted-foreground hover:border-foreground"
+                    }`}
+                  >
+                    <MapPin className="w-4 h-4" /> Packeta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod("address")}
+                    className={`flex items-center gap-2 px-4 py-3 border font-mono text-xs uppercase tracking-widest transition-all ${
+                      deliveryMethod === "address"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-card text-muted-foreground hover:border-foreground"
+                    }`}
+                  >
+                    <Home className="w-4 h-4" /> Na adresu
+                  </button>
+                </div>
               </div>
+
+              {deliveryMethod === "packeta" && (
+                <div>
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-1.5">
+                    Odberné miesto <span className="text-primary">*</span>
+                  </label>
+                  {packetaPoint ? (
+                    <div className="border border-primary/40 bg-primary/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-display text-lg uppercase leading-tight">
+                            {packetaPoint.name}
+                          </p>
+                          <p className="font-mono text-[11px] text-muted-foreground mt-1">
+                            {[packetaPoint.street, packetaPoint.city, packetaPoint.zip]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openPacketaWidget}
+                          disabled={!widgetReady}
+                          className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline disabled:opacity-50"
+                        >
+                          Zmeniť
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={openPacketaWidget}
+                      disabled={!widgetReady || !packetaKey}
+                      className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border bg-card px-4 py-5 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:border-primary hover:text-foreground transition-all disabled:opacity-50"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      {widgetReady ? "Vybrať odberné miesto na mape" : "Načítavam mapu…"}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {deliveryMethod === "address" && (
+                <div>
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-1.5">
+                    Doručovacia adresa <span className="text-primary">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder={"Meno Priezvisko\nUlica č. 1\n080 01 Prešov"}
+                    required={deliveryMethod === "address"}
+                    className={inputCls + " resize-none"}
+                  />
+                </div>
+              )}
 
               {/* Consent */}
               <label className="flex items-start gap-3 cursor-pointer group">
