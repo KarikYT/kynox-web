@@ -134,6 +134,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         status: z.enum(["caka_na_platbu", "zaplatene", "spracovava_sa", "poslane", "dorucene"]),
+        sendEmail: z.boolean().optional().default(false),
       })
       .parse(input),
   )
@@ -144,8 +145,42 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .update({ status: data.status })
       .eq("id", data.id);
     if (error) throw error;
-    return { ok: true };
+
+    let emailSent = false;
+    const emailable: OrderStatus[] = ["zaplatene", "spracovava_sa", "poslane", "dorucene"];
+    if (data.sendEmail && (emailable as string[]).includes(data.status)) {
+      // Check if email for this status was already sent — use admin to read full row
+      const { data: row } = await supabaseAdmin
+        .from("orders")
+        .select("email, code, sent_status_emails")
+        .eq("id", data.id)
+        .single();
+      if (row) {
+        const sent: string[] = (row.sent_status_emails as string[] | null) ?? [];
+        if (!sent.includes(data.status)) {
+          try {
+            await sendStatusEmail({
+              to: row.email,
+              code: row.code,
+              status: data.status as OrderStatus,
+            });
+            await supabaseAdmin
+              .from("orders")
+              .update({ sent_status_emails: [...sent, data.status] })
+              .eq("id", data.id);
+            emailSent = true;
+          } catch (e) {
+            console.error("Status email failed:", e);
+          }
+        }
+      }
+    }
+    return { ok: true, emailSent };
   });
+
+export const getPacketaApiKey = createServerFn({ method: "GET" }).handler(async () => {
+  return { apiKey: process.env.PACKETA_API_KEY ?? "" };
+});
 
 export const deleteOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
