@@ -772,7 +772,8 @@ function OrdersTab() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  
+  const [sendEmail, setSendEmail] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -792,11 +793,18 @@ function OrdersTab() {
 
   async function changeStatus(id: string, status: string) {
     setUpdating(id);
+    const shouldSend = !!sendEmail[id];
     try {
-      await updateOrderStatus({
-        data: { id, status: status as any },
+      const res = await updateOrderStatus({
+        data: { id, status: status as any, sendEmail: shouldSend },
       });
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+      // Reset checkbox after status change
+      setSendEmail((prev) => ({ ...prev, [id]: false }));
+      if (shouldSend) {
+        setToast(res.emailSent ? "Email odoslaný ✓" : "Email už bol odoslaný skôr (preskočené)");
+        setTimeout(() => setToast(null), 3000);
+      }
     } finally {
       setUpdating(null);
     }
