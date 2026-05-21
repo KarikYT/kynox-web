@@ -30,7 +30,6 @@ const sportCatalog: Record<string, string[]> = {
   "Baseball":  ["Pálky", "Lopty", "Helmy", "Rukavice"],
   "Ping pong": ["Pálky", "Loptičky", "Stoly", "Siete"],
   "Volejbal":  ["Lopty", "Obuv", "Sieťky", "Chrániče kolien"],
-  "Florbal":   ["nič ešte"],
   "Florbal":   ["Hokejky", "Lopty", "Brankárska výstroj", "Oblečenie"],
   "Golf":      ["Palice", "Loptičky", "Vozíky", "Oblečenie"],
   "Ostatné":   ["Protein", "Výživové doplnky", "Home Gym", "Čínky", "Hydratácia", "F1"]
