@@ -22,11 +22,16 @@ export const Route = createFileRoute("/")({
 });
 
 const tickerItems = [
-  "VO2 MAX 84.2",
-  "PRAH LAKTÁTU 182 BPM",
-  "REGENERÁCIA −4%",
-  "SILA 4400N",
-  "ŠPRINT Δ 4.2s",
+  "FUTBAL",
+  "HOKEJ",
+  "BOX",
+  "BASKETBALL",
+  "VOLEJBAL",
+  "HOME GYM",
+  "PROTEÍN",
+  "9 ŠPORTOV",
+  "1 OBCHOD",
+  "DROP 026",
 ];
 
 function Index() {
