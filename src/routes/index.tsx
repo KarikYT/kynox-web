@@ -108,7 +108,7 @@ function Index() {
               },
               {
                 tag: "03 / ODHODLANIE",
-                val: "0 výhovoriek",
+                val: "Len výkon",
                 desc: "Správna výbava eliminuje každú výhovorku. Zostáva len tréning a výsledok.",
               },
             ].map((s, idx) => (
