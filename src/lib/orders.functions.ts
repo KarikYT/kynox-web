@@ -49,6 +49,10 @@ export const createOrder = createServerFn({ method: "POST" })
         address: data.address,
         total,
         status: "caka_na_platbu",
+        delivery_method: data.deliveryMethod,
+        packeta_point_id: data.packetaPointId ?? null,
+        packeta_point_name: data.packetaPointName ?? null,
+        packeta_point_address: data.packetaPointAddress ?? null,
       })
       .select()
       .single();
