@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sprinter.jpg";
-import strengthImg from "@/assets/program-strength.jpg";
-import runImg from "@/assets/program-run.jpg";
+import vybavaImg from "@/assets/program-strength.jpg";
+import outdoorImg from "@/assets/program-run.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { SiteNav } from "@/components/site-nav";
 
@@ -145,18 +145,18 @@ function Index() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12">
             {[
               {
-                tag: "Sila",
-                title: "Iron Pulse",
-                desc: "12 týždňov surovej sily. Bez taniera so šalátom.",
-                img: strengthImg,
-                alt: "Atlét dvíhajúci činku",
+                tag: "Výbava",
+                title: "Všetko, čo ťa robí lepším.",
+                desc: "Kopačky. Činky. Proteín. Žiadne výhovorky.",
+                img: vybavaImg,
+                alt: "Atlét s činkou a proteínom v kopačkách",
               },
               {
-                tag: "Vytrvalosť",
-                title: "Vortex Run",
-                desc: "Prahový beh, intervaly, mentálka. Hranica je len začiatok.",
-                img: runImg,
-                alt: "Bežec na asfalte",
+                tag: "Hydratácia",
+                title: "Vždy nabitý. Vždy hydratovaný.",
+                desc: "Fľaše a tašky, ktoré idú všade kam ty.",
+                img: outdoorImg,
+                alt: "Atletka s Nike taškou a Adidas fľašou",
               },
             ].map((p, i) => (
               <div
