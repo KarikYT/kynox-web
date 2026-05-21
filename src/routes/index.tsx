@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "KYNOX — Trpieť lepšie" },
+      { title: "KYNOX" },
       {
         name: "description",
         content:
@@ -96,21 +96,23 @@ function Index() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border border border-border">
             {[
-              {
-                tag: "01 / VÝKON",
-                val: "98.4%",
-                desc: "Efektivita pri maximálnej záťaži. Každý watt premenený na pohyb — nič sa nestratí.",
-              },
-              {
-                tag: "02 / RÝCHLOSŤ",
-                val: "12.8ms",
-                desc: "Zrýchlenie reakcie po 8 týždňoch. Rýchlejšie ako myšlienka, ostrejšie ako inštinkt.",
-              },
-              {
-                tag: "03 / SILA",
-                val: "4400N",
-                desc: "Špičkový tlak pri vertikálnom skoku. Hranice nie sú strop — sú odrazový mostík.",
-              },
+               {[
+                 {
+                   tag: "01 / VÝBER",
+                   val: "9+",
+                   desc: "Športov pokrytých v jednom obchode. Futbal, hokej, box, basketball a ďalšie — všetko na jednom mieste.",
+                 },
+                 {
+                   tag: "02 / VÝBAVA",
+                   val: "DROP 026",
+                   desc: "Nová kolekcia. Kopačky, hokejky, proteín, tašky. Veci, ktoré prežijú každý tréning.",
+                 },
+                 {
+                   tag: "03 / ODHODLANIE",
+                   val: "0 výhovoriek",
+                   desc: "Správna výbava eliminuje každú výhovorku. Zostáva len tréning a výsledok.",
+                 },
+               ]}
             ].map((s, idx) => (
               <div
                 key={s.tag}
