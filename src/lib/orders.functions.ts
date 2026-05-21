@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendOrderEmail } from "./email.server";
+import { sendOrderEmail, sendStatusEmail, type OrderStatus } from "./email.server";
 
 
 const ItemSchema = z.object({
