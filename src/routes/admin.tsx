@@ -1019,7 +1019,7 @@ function InfoBlock({
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-0.5">
         {label}
       </span>
-      <span className="font-mono text-xs break-words">{value}</span>
+      <span className="font-mono text-xs break-words whitespace-pre-line">{value}</span>
     </div>
   );
 }
