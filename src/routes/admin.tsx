@@ -890,8 +890,18 @@ function OrdersTab() {
                         label="Dátum"
                         value={new Date(o.created_at).toLocaleString("sk-SK")}
                       />
+                      <InfoBlock
+                        label="Doručenie"
+                        value={
+                          o.delivery_method === "packeta"
+                            ? `Packeta${o.packeta_point_name ? ` · ${o.packeta_point_name}` : ""}${o.packeta_point_id ? ` (#${o.packeta_point_id})` : ""}${o.packeta_point_address ? `\n${o.packeta_point_address}` : ""}`
+                            : "Na adresu"
+                        }
+                        className="sm:col-span-3"
+                      />
                       <InfoBlock label="Adresa" value={o.address} className="sm:col-span-3" />
                     </div>
+
 
                     <div>
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
