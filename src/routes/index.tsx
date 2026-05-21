@@ -96,23 +96,21 @@ function Index() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border border border-border">
             {[
-               {[
-                 {
-                   tag: "01 / VÝBER",
-                   val: "10+",
-                   desc: "Športov pokrytých v jednom obchode. Futbal, hokej, box, basketball a ďalšie — všetko na jednom mieste.",
-                 },
-                 {
-                   tag: "02 / VÝBAVA",
-                   val: "DROP 026",
-                   desc: "Nová kolekcia. Kopačky, hokejky, proteín, tašky. Veci, ktoré prežijú každý tréning.",
-                 },
-                 {
-                   tag: "03 / ODHODLANIE",
-                   val: "0 výhovoriek",
-                   desc: "Správna výbava eliminuje každú výhovorku. Zostáva len tréning a výsledok.",
-                 },
-               ]}
+              {
+                tag: "01 / VÝBER",
+                val: "10+",
+                desc: "Športov pokrytých v jednom obchode. Futbal, hokej, box, basketball a ďalšie — všetko na jednom mieste.",
+              },
+              {
+                tag: "02 / VÝBAVA",
+                val: "DROP 026",
+                desc: "Nová kolekcia. Kopačky, hokejky, proteín, tašky. Veci, ktoré prežijú každý tréning.",
+              },
+              {
+                tag: "03 / ODHODLANIE",
+                val: "0 výhovoriek",
+                desc: "Správna výbava eliminuje každú výhovorku. Zostáva len tréning a výsledok.",
+              },
             ].map((s, idx) => (
               <div
                 key={s.tag}
