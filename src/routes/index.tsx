@@ -99,7 +99,7 @@ function Index() {
                {[
                  {
                    tag: "01 / VÝBER",
-                   val: "9+",
+                   val: "10+",
                    desc: "Športov pokrytých v jednom obchode. Futbal, hokej, box, basketball a ďalšie — všetko na jednom mieste.",
                  },
                  {
