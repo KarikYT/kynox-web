@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-sprinter.jpg";
-import vybavaImg from "@/assets/program-strength.jpg";
-import outdoorImg from "@/assets/program-run.jpg";
+import vybavaImg from "@/assets/vybavaImg.jpg";
+import outdoorImg from "@/assets/outdoorImg.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { SiteNav } from "@/components/site-nav";
 
