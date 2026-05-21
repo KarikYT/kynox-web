@@ -85,7 +85,7 @@ const visible = (products as Product[]).filter((p) => {
       </header>
 
       <div className="sticky top-[72px] sm:top-[88px] z-40 bg-background/90 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3 pb-2 flex gap-2 sm:gap-3 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3 pb-2 flex flex-wrap gap-2 sm:gap-3 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
           {Object.keys(sportCatalog).map((sport) => {
             const active = sport === activeSport;
             return (
@@ -106,7 +106,7 @@ const visible = (products as Product[]).filter((p) => {
         </div>
 
         {subCategories.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-3 flex gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] border-t border-border/40 pt-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-3 flex flex-wrap gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] border-t border-border/40 pt-2">
             <button
               type="button"
               onClick={() => setActiveSub(null)}
