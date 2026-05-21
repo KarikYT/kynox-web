@@ -3,7 +3,7 @@ import heroImg from "@/assets/hero-sprinter.jpg";
 import vybavaImg from "@/assets/vybavaImg.jpg";
 import outdoorImg from "@/assets/outdoorImg.jpg";
 import { useReveal } from "@/hooks/use-reveal";
-import { SiteNav } from "@/components/site-nav";§
+import { SiteNav } from "@/components/site-nav";
 import { Link } from "@tanstack/react-router";
 
 
