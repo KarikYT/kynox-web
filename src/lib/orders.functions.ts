@@ -21,6 +21,10 @@ const CreateOrderSchema = z.object({
   address: z.string().min(3).max(1000),
   consent: z.literal(true),
   items: z.array(ItemSchema).min(1).max(50),
+  deliveryMethod: z.enum(["packeta", "address"]).default("packeta"),
+  packetaPointId: z.string().max(50).nullable().optional(),
+  packetaPointName: z.string().max(255).nullable().optional(),
+  packetaPointAddress: z.string().max(500).nullable().optional(),
 });
 
 function makeCode(): string {
