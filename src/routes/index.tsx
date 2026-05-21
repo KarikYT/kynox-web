@@ -3,7 +3,9 @@ import heroImg from "@/assets/hero-sprinter.jpg";
 import vybavaImg from "@/assets/vybavaImg.jpg";
 import outdoorImg from "@/assets/outdoorImg.jpg";
 import { useReveal } from "@/hooks/use-reveal";
-import { SiteNav } from "@/components/site-nav";
+import { SiteNav } from "@/components/site-nav";§
+import { Link } from "@tanstack/react-router";
+
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -205,9 +207,12 @@ function Index() {
           <h2 className="font-display text-[clamp(2.75rem,11vw,10rem)] text-background leading-[0.9] uppercase mb-8 sm:mb-12 tracking-tighter break-words">
             Žiadne výhovorky.<br />Iba výkon.
           </h2>
-          <button onclick="window.location.href='store' className="bg-background text-foreground font-display text-xl sm:text-3xl md:text-4xl px-8 sm:px-16 md:px-20 py-5 sm:py-7 md:py-8 uppercase hover:scale-105 hover:tracking-wide transition-all duration-500 w-full sm:w-auto animate-pulse-glow">
+          <Link
+            to="/store"
+            className="bg-background text-foreground font-display text-xl sm:text-3xl md:text-4xl px-8 sm:px-16 md:px-20 py-5 sm:py-7 md:py-8 uppercase hover:scale-105 hover:tracking-wide transition-all duration-500 w-full sm:w-auto animate-pulse-glow"
+          >
             Do obchodu
-          </button>
+          </Link>
         </div>
       </section>
 
