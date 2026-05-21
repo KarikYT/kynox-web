@@ -164,6 +164,117 @@ export async function sendOrderEmail(params: {
   }
 }
 
+export type OrderStatus = "zaplatene" | "spracovava_sa" | "poslane" | "dorucene";
+
+const STATUS_CONTENT: Record<OrderStatus, { subject: string; title: string; body: string; emoji: string }> = {
+  zaplatene: {
+    subject: "Platba prijatá",
+    title: "Platba prijatá ✓",
+    emoji: "💰",
+    body: "Ďakujeme! Tvoju platbu sme úspešne prijali. Objednávku ideme pripravovať.",
+  },
+  spracovava_sa: {
+    subject: "Objednávka sa spracováva",
+    title: "Spracovávame tvoju objednávku",
+    emoji: "📦",
+    body: "Tvoju objednávku práve balíme. Čoskoro ju odovzdáme dopravcovi.",
+  },
+  poslane: {
+    subject: "Objednávka odoslaná",
+    title: "Objednávka je na ceste",
+    emoji: "🚚",
+    body: "Tvoja objednávka bola odoslaná. Doručenie zvyčajne trvá 1–3 pracovné dni.",
+  },
+  dorucene: {
+    subject: "Objednávka doručená",
+    title: "Doručené ✓",
+    emoji: "🎉",
+    body: "Tvoja objednávka by mala byť doručená. Ďakujeme, že nakupuješ u nás — KYNOX.",
+  },
+};
+
+export async function sendStatusEmail(params: {
+  to: string;
+  code: string;
+  status: OrderStatus;
+}): Promise<void> {
+  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+  const GOOGLE_MAIL_API_KEY = process.env.GOOGLE_MAIL_API_KEY;
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+  if (!GOOGLE_MAIL_API_KEY) throw new Error("GOOGLE_MAIL_API_KEY missing");
+
+  const c = STATUS_CONTENT[params.status];
+  const origin = siteOrigin();
+  const orderUrl = `${origin}/order/${params.code}`;
+  const subject = `KYNOX — ${c.subject} · ${params.code}`;
+
+  const html = `<!doctype html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;color:#111">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+        <tr><td style="background:#111;padding:24px 32px">
+          <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:3px">KYNOX</span>
+        </td></tr>
+        <tr><td style="padding:40px 32px;text-align:center">
+          <div style="font-size:48px;line-height:1;margin-bottom:16px">${c.emoji}</div>
+          <h1 style="margin:0 0 8px;font-size:26px;font-weight:700">${escapeHtml(c.title)}</h1>
+          <p style="margin:0 0 8px;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px">Objednávka</p>
+          <p style="margin:0 0 24px;font-size:22px;font-weight:700;font-family:monospace">${escapeHtml(params.code)}</p>
+          <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#444">${escapeHtml(c.body)}</p>
+          <p style="margin:0">
+            <a href="${orderUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:.5px">Sledovať objednávku →</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:16px 32px;border-top:1px solid #eee;text-align:center;font-size:12px;color:#aaa">
+          © KYNOX · Ak máš otázky, odpovedaj na tento e-mail.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = `${c.title}\n\nObjednávka: ${params.code}\n\n${c.body}\n\nStav objednávky: ${orderUrl}\n`;
+
+  const boundary = "kynox_" + Math.random().toString(36).slice(2);
+  const rfc = [
+    `To: ${params.to}`,
+    `Subject: =?UTF-8?B?${b64url(subject)}?=`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    text,
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    html,
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+
+  const raw = b64url(rfc);
+
+  const res = await fetch(`${GATEWAY_URL}/users/me/messages/send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": GOOGLE_MAIL_API_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gmail send failed [${res.status}]: ${body}`);
+  }
+}
+
 function fmt(n: number): string {
   return (n % 1 === 0 ? `${n}` : n.toFixed(2).replace(".", ",")) + " €";
 }
