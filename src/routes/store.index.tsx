@@ -32,7 +32,8 @@ const sportCatalog: Record<string, string[]> = {
   "Volejbal":  ["Lopty", "Obuv", "Sieťky", "Chrániče kolien"],
   "Florbal":   ["Hokejky", "Lopty", "Brankárska výstroj", "Oblečenie"],
   "Golf":      ["Palice", "Loptičky", "Vozíky", "Oblečenie"],
-  "Ostatné":   ["Protein", "Výživové doplnky", "Home Gym", "Čínky", "Hydratácia", "F1"]
+  "F1":        ["nevim"]
+  "Ostatné":   ["Oblečenie", "Protein", "Výživové doplnky", "Home Gym", "Čínky", "Hydratácia"]
 };
 
 function StorePage() {
