@@ -1254,7 +1254,7 @@ function AdminPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {tab === "products" ? <ProductsTab /> : <OrdersTab />}
+        {tab === "products" ? <ProductsTab /> : tab === "orders" ? <OrdersTab /> : <PacketaTab />}
       </div>
     </div>
   );
