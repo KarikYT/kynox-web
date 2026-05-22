@@ -1233,6 +1233,7 @@ function AdminPage() {
             [
               { id: "products", label: "Produkty", Icon: Package },
               { id: "orders", label: "Objednávky", Icon: ShoppingBag },
+              { id: "packeta", label: "Packeta", Icon: Truck },
             ] as { id: Tab; label: string; Icon: any }[]
           ).map(({ id, label, Icon }) => (
             <button
