@@ -1173,6 +1173,89 @@ function InfoBlock({
   );
 }
 
+// ─── Packeta Tab ──────────────────────────────────────────────────────────────
+function PacketaTab() {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await listOrders();
+      const all = (res.orders ?? []) as OrderRow[];
+      setOrders(all.filter((o) => o.packeta_packet_id));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  if (!loaded) {
+    setLoaded(true);
+    load();
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-2xl uppercase italic">Packeta zásielky</h2>
+        <button
+          type="button"
+          onClick={load}
+          className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Obnoviť
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="py-20 text-center">
+          <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest">
+            Žiadne zásielky odoslané do Packety
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {orders.map((o) => (
+            <div
+              key={o.id}
+              className="flex flex-wrap items-center gap-4 border border-border bg-card px-4 py-3"
+            >
+              <span className="font-mono text-xs font-bold text-primary shrink-0">{o.code}</span>
+              <span className="font-mono text-xs text-muted-foreground truncate flex-1 min-w-[150px]">
+                {o.email}
+              </span>
+              <span className="font-mono text-xs shrink-0">
+                Packeta ID: <span className="text-primary">{o.packeta_packet_id}</span>
+              </span>
+              <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                {o.packeta_parcel_size && PARCEL_SIZE_LABELS[o.packeta_parcel_size]?.split(" (")[0]}
+                {o.packeta_weight ? ` · ${o.packeta_weight} kg` : ""}
+              </span>
+              <span className="font-mono text-xs tabular-nums shrink-0">
+                {formatPrice(Number(o.total))}
+              </span>
+              <a
+                href={`https://client.packeta.com/sk/senders/packets/${o.packeta_packet_id}/edit`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-1.5 hover:bg-primary hover:text-background transition-all shrink-0"
+              >
+                <ExternalLink className="w-3 h-3" /> Otvoriť v Packete
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 function AdminPage() {
   const [authed, setAuthed] = useState(false);
