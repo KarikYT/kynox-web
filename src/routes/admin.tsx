@@ -7,7 +7,7 @@ import {
   saveProduct,
   deleteProduct,
 } from "@/lib/admin.functions";
-import { listOrders, updateOrderStatus, deleteOrder } from "@/lib/orders.functions";
+import { listOrders, updateOrderStatus, deleteOrder, submitOrderToPacketa } from "@/lib/orders.functions";
 import { fetchAllProducts, formatPrice, type Product } from "@/lib/products";
 import {
   Loader2,
