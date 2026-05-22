@@ -792,6 +792,53 @@ function OrdersTab() {
   const [loaded, setLoaded] = useState(false);
   const [sendEmail, setSendEmail] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [packetaForm, setPacketaForm] = useState<Record<string, { size: string; weight: string }>>({});
+  const [submittingPacketa, setSubmittingPacketa] = useState<string | null>(null);
+
+  function getPForm(id: string) {
+    return packetaForm[id] ?? { size: "shoe_box", weight: "1" };
+  }
+  function setPForm(id: string, patch: Partial<{ size: string; weight: string }>) {
+    setPacketaForm((prev) => ({ ...prev, [id]: { ...getPForm(id), ...patch } }));
+  }
+
+  async function submitToPacketa(id: string) {
+    const f = getPForm(id);
+    const w = parseFloat(f.weight);
+    if (!w || w <= 0) {
+      setToast("Zadaj platnú váhu (kg)");
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setSubmittingPacketa(id);
+    try {
+      const res = await submitOrderToPacketa({
+        data: { id, parcelSize: f.size as any, weight: w },
+      });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === id
+            ? {
+                ...o,
+                packeta_packet_id: res.packetId,
+                packeta_barcode: res.barcode,
+                packeta_tracking_url: res.trackingUrl,
+                packeta_parcel_size: f.size,
+                packeta_weight: w,
+                packeta_submitted_at: new Date().toISOString(),
+              }
+            : o,
+        ),
+      );
+      setToast(`Pridané do Packety ✓ (ID: ${res.packetId})`);
+      setTimeout(() => setToast(null), 4000);
+    } catch (e: any) {
+      setToast("Chyba: " + (e.message ?? "Packeta zlyhala"));
+      setTimeout(() => setToast(null), 5000);
+    } finally {
+      setSubmittingPacketa(null);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
