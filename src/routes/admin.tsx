@@ -766,6 +766,12 @@ type OrderRow = {
   packeta_point_id?: string | null;
   packeta_point_name?: string | null;
   packeta_point_address?: string | null;
+  packeta_packet_id?: string | null;
+  packeta_barcode?: string | null;
+  packeta_tracking_url?: string | null;
+  packeta_parcel_size?: string | null;
+  packeta_weight?: number | string | null;
+  packeta_submitted_at?: string | null;
 };
 type OrderItemRow = {
   order_id: string;
