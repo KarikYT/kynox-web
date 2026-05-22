@@ -28,7 +28,13 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "products" | "orders";
+type Tab = "products" | "orders" | "packeta";
+
+const PARCEL_SIZE_LABELS: Record<string, string> = {
+  small_envelope: "Malá obálka (250×180×20 mm)",
+  shoe_box: "Krabica na topánky (350×250×150 mm)",
+  big_box: "Veľká krabica (500×400×300 mm)",
+};
 
 const STATUS_LABELS: Record<string, string> = {
   caka_na_platbu: "Čaká na platbu",
