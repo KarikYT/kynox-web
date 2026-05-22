@@ -1001,6 +1001,94 @@ function OrdersTab() {
                       </table>
                     </div>
 
+                    {/* Packeta block */}
+                    {o.delivery_method === "packeta" && (
+                      <div className="border border-border bg-background px-3 py-3">
+                        <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+                          <Truck className="w-3 h-3" /> Packeta zásielka
+                        </div>
+                        {o.packeta_packet_id ? (
+                          <div className="space-y-2">
+                            <div className="font-mono text-xs">
+                              ID: <span className="text-primary">{o.packeta_packet_id}</span>
+                              {o.packeta_barcode && (
+                                <>
+                                  {" · "}
+                                  <span className="text-muted-foreground">{o.packeta_barcode}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="font-mono text-[10px] text-muted-foreground">
+                              {o.packeta_parcel_size && PARCEL_SIZE_LABELS[o.packeta_parcel_size]}
+                              {o.packeta_weight ? ` · ${o.packeta_weight} kg` : ""}
+                              {o.packeta_submitted_at
+                                ? ` · ${new Date(o.packeta_submitted_at).toLocaleString("sk-SK")}`
+                                : ""}
+                            </div>
+                            <a
+                              href={`https://client.packeta.com/sk/senders/packets/${o.packeta_packet_id}/edit`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-1.5 hover:bg-primary hover:text-background transition-all"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Skontrolovať v Packete
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-end gap-2">
+                            <label className="flex flex-col gap-1">
+                              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                                Veľkosť
+                              </span>
+                              <select
+                                value={getPForm(o.id).size}
+                                onChange={(e) => setPForm(o.id, { size: e.target.value })}
+                                className="bg-background border border-border font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-primary"
+                              >
+                                {Object.entries(PARCEL_SIZE_LABELS).map(([v, l]) => (
+                                  <option key={v} value={v}>
+                                    {l}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                                Váha (kg)
+                              </span>
+                              <input
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={getPForm(o.id).weight}
+                                onChange={(e) => setPForm(o.id, { weight: e.target.value })}
+                                className="w-24 bg-background border border-border font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-primary"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => submitToPacketa(o.id)}
+                              disabled={submittingPacketa === o.id || !o.packeta_point_id}
+                              className="flex items-center gap-1.5 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-4 py-2 hover:bg-primary/90 transition-all disabled:opacity-50"
+                            >
+                              {submittingPacketa === o.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Truck className="w-3 h-3" />
+                              )}
+                              Pridať do Packety
+                            </button>
+                            {!o.packeta_point_id && (
+                              <span className="font-mono text-[10px] text-destructive">
+                                Chýba výdajný bod
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         Stav:
