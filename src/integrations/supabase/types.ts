@@ -73,9 +73,15 @@ export type Database = {
           delivery_method: string
           email: string
           id: string
+          packeta_barcode: string | null
+          packeta_packet_id: string | null
+          packeta_parcel_size: string | null
           packeta_point_address: string | null
           packeta_point_id: string | null
           packeta_point_name: string | null
+          packeta_submitted_at: string | null
+          packeta_tracking_url: string | null
+          packeta_weight: number | null
           phone: string
           sent_status_emails: string[]
           status: Database["public"]["Enums"]["order_status"]
@@ -89,9 +95,15 @@ export type Database = {
           delivery_method?: string
           email: string
           id?: string
+          packeta_barcode?: string | null
+          packeta_packet_id?: string | null
+          packeta_parcel_size?: string | null
           packeta_point_address?: string | null
           packeta_point_id?: string | null
           packeta_point_name?: string | null
+          packeta_submitted_at?: string | null
+          packeta_tracking_url?: string | null
+          packeta_weight?: number | null
           phone?: string
           sent_status_emails?: string[]
           status?: Database["public"]["Enums"]["order_status"]
@@ -105,9 +117,15 @@ export type Database = {
           delivery_method?: string
           email?: string
           id?: string
+          packeta_barcode?: string | null
+          packeta_packet_id?: string | null
+          packeta_parcel_size?: string | null
           packeta_point_address?: string | null
           packeta_point_id?: string | null
           packeta_point_name?: string | null
+          packeta_submitted_at?: string | null
+          packeta_tracking_url?: string | null
+          packeta_weight?: number | null
           phone?: string
           sent_status_emails?: string[]
           status?: Database["public"]["Enums"]["order_status"]

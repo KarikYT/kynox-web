@@ -182,6 +182,120 @@ export const getPacketaApiKey = createServerFn({ method: "GET" }).handler(async 
   return { apiKey: process.env.PACKETA_API_KEY ?? "" };
 });
 
+// ─── Submit order to Packeta (creates packet via REST API) ───────────────────
+const PARCEL_SIZES = {
+  small_envelope: { label: "Malá obálka", L: 250, W: 180, H: 20 },
+  shoe_box: { label: "Krabica na topánky", L: 350, W: 250, H: 150 },
+  big_box: { label: "Veľká krabica", L: 500, W: 400, H: 300 },
+} as const;
+
+function escXml(v: string | number): string {
+  return String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function getTag(xml: string, tag: string): string | null {
+  const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+  return m ? m[1].trim() : null;
+}
+
+export const submitOrderToPacketa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        parcelSize: z.enum(["small_envelope", "shoe_box", "big_box"]),
+        weight: z.number().positive().max(50),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const apiPassword = process.env.PACKETA_API_PASSWORD;
+    if (!apiPassword) throw new Error("Chýba PACKETA_API_PASSWORD secret.");
+
+    const { data: order, error } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error || !order) throw new Error("Objednávka sa nenašla.");
+    if ((order as any).packeta_packet_id) throw new Error("Objednávka už bola odoslaná do Packety.");
+    if (order.delivery_method !== "packeta" || !order.packeta_point_id) {
+      throw new Error("Objednávka nemá zvolený Packeta výdajný bod.");
+    }
+
+    const addressLines = (order.address || "").split("\n").map((l) => l.trim()).filter(Boolean);
+    const fullName = addressLines[0] || order.email.split("@")[0];
+    const parts = fullName.split(/\s+/);
+    const firstName = parts[0] || "Zákazník";
+    const surname = parts.slice(1).join(" ") || "—";
+
+    const size = PARCEL_SIZES[data.parcelSize];
+
+    const xml = `<?xml version="1.0" encoding="utf-8"?>
+<createPacket>
+  <apiPassword>${escXml(apiPassword)}</apiPassword>
+  <packetAttributes>
+    <number>${escXml(order.code)}</number>
+    <name>${escXml(firstName)}</name>
+    <surname>${escXml(surname)}</surname>
+    <email>${escXml(order.email)}</email>
+    <phone>${escXml(order.phone || "")}</phone>
+    <addressId>${escXml(order.packeta_point_id)}</addressId>
+    <cod>0</cod>
+    <value>${escXml(Number(order.total).toFixed(2))}</value>
+    <weight>${escXml(data.weight)}</weight>
+    <length>${escXml(size.L)}</length>
+    <width>${escXml(size.W)}</width>
+    <height>${escXml(size.H)}</height>
+    <eshop>KYNOX</eshop>
+  </packetAttributes>
+</createPacket>`;
+
+    const res = await fetch("https://www.zasilkovna.cz/api/rest", {
+      method: "POST",
+      headers: { "Content-Type": "text/xml; charset=utf-8" },
+      body: xml,
+    });
+    const responseText = await res.text();
+    const status = getTag(responseText, "status");
+    if (status !== "ok") {
+      const fault =
+        getTag(responseText, "string") ||
+        getTag(responseText, "fault") ||
+        responseText.slice(0, 500);
+      throw new Error("Packeta chyba: " + fault);
+    }
+
+    const result = responseText.match(/<result>([\s\S]*?)<\/result>/)?.[1] ?? responseText;
+    const packetId = getTag(result, "id");
+    const barcode = getTag(result, "barcode");
+    const barcodeText = getTag(result, "barcodeText");
+    const trackingUrl = barcode ? `https://tracking.packeta.com/sk/?id=${barcode}` : null;
+
+    if (!packetId) throw new Error("Packeta nevrátila ID zásielky.");
+
+    await supabaseAdmin
+      .from("orders")
+      .update({
+        packeta_packet_id: packetId,
+        packeta_barcode: barcode || barcodeText,
+        packeta_tracking_url: trackingUrl,
+        packeta_parcel_size: data.parcelSize,
+        packeta_weight: data.weight,
+        packeta_submitted_at: new Date().toISOString(),
+      } as any)
+      .eq("id", data.id);
+
+    return { ok: true, packetId, barcode: barcode || barcodeText, trackingUrl };
+  });
+
+
 export const deleteOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

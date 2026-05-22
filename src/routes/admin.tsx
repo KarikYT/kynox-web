@@ -7,7 +7,7 @@ import {
   saveProduct,
   deleteProduct,
 } from "@/lib/admin.functions";
-import { listOrders, updateOrderStatus, deleteOrder } from "@/lib/orders.functions";
+import { listOrders, updateOrderStatus, deleteOrder, submitOrderToPacketa } from "@/lib/orders.functions";
 import { fetchAllProducts, formatPrice, type Product } from "@/lib/products";
 import {
   Loader2,
@@ -20,13 +20,21 @@ import {
   ChevronDown,
   Package,
   ShoppingBag,
+  Truck,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "products" | "orders";
+type Tab = "products" | "orders" | "packeta";
+
+const PARCEL_SIZE_LABELS: Record<string, string> = {
+  small_envelope: "Malá obálka (250×180×20 mm)",
+  shoe_box: "Krabica na topánky (350×250×150 mm)",
+  big_box: "Veľká krabica (500×400×300 mm)",
+};
 
 const STATUS_LABELS: Record<string, string> = {
   caka_na_platbu: "Čaká na platbu",
@@ -758,6 +766,12 @@ type OrderRow = {
   packeta_point_id?: string | null;
   packeta_point_name?: string | null;
   packeta_point_address?: string | null;
+  packeta_packet_id?: string | null;
+  packeta_barcode?: string | null;
+  packeta_tracking_url?: string | null;
+  packeta_parcel_size?: string | null;
+  packeta_weight?: number | string | null;
+  packeta_submitted_at?: string | null;
 };
 type OrderItemRow = {
   order_id: string;
@@ -778,6 +792,53 @@ function OrdersTab() {
   const [loaded, setLoaded] = useState(false);
   const [sendEmail, setSendEmail] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [packetaForm, setPacketaForm] = useState<Record<string, { size: string; weight: string }>>({});
+  const [submittingPacketa, setSubmittingPacketa] = useState<string | null>(null);
+
+  function getPForm(id: string) {
+    return packetaForm[id] ?? { size: "shoe_box", weight: "1" };
+  }
+  function setPForm(id: string, patch: Partial<{ size: string; weight: string }>) {
+    setPacketaForm((prev) => ({ ...prev, [id]: { ...getPForm(id), ...patch } }));
+  }
+
+  async function submitToPacketa(id: string) {
+    const f = getPForm(id);
+    const w = parseFloat(f.weight);
+    if (!w || w <= 0) {
+      setToast("Zadaj platnú váhu (kg)");
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setSubmittingPacketa(id);
+    try {
+      const res = await submitOrderToPacketa({
+        data: { id, parcelSize: f.size as any, weight: w },
+      });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === id
+            ? {
+                ...o,
+                packeta_packet_id: res.packetId,
+                packeta_barcode: res.barcode,
+                packeta_tracking_url: res.trackingUrl,
+                packeta_parcel_size: f.size,
+                packeta_weight: w,
+                packeta_submitted_at: new Date().toISOString(),
+              }
+            : o,
+        ),
+      );
+      setToast(`Pridané do Packety ✓ (ID: ${res.packetId})`);
+      setTimeout(() => setToast(null), 4000);
+    } catch (e: any) {
+      setToast("Chyba: " + (e.message ?? "Packeta zlyhala"));
+      setTimeout(() => setToast(null), 5000);
+    } finally {
+      setSubmittingPacketa(null);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -940,6 +1001,94 @@ function OrdersTab() {
                       </table>
                     </div>
 
+                    {/* Packeta block */}
+                    {o.delivery_method === "packeta" && (
+                      <div className="border border-border bg-background px-3 py-3">
+                        <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+                          <Truck className="w-3 h-3" /> Packeta zásielka
+                        </div>
+                        {o.packeta_packet_id ? (
+                          <div className="space-y-2">
+                            <div className="font-mono text-xs">
+                              ID: <span className="text-primary">{o.packeta_packet_id}</span>
+                              {o.packeta_barcode && (
+                                <>
+                                  {" · "}
+                                  <span className="text-muted-foreground">{o.packeta_barcode}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="font-mono text-[10px] text-muted-foreground">
+                              {o.packeta_parcel_size && PARCEL_SIZE_LABELS[o.packeta_parcel_size]}
+                              {o.packeta_weight ? ` · ${o.packeta_weight} kg` : ""}
+                              {o.packeta_submitted_at
+                                ? ` · ${new Date(o.packeta_submitted_at).toLocaleString("sk-SK")}`
+                                : ""}
+                            </div>
+                            <a
+                              href={`https://client.packeta.com/sk/senders/packets/${o.packeta_packet_id}/edit`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-1.5 hover:bg-primary hover:text-background transition-all"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Skontrolovať v Packete
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-end gap-2">
+                            <label className="flex flex-col gap-1">
+                              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                                Veľkosť
+                              </span>
+                              <select
+                                value={getPForm(o.id).size}
+                                onChange={(e) => setPForm(o.id, { size: e.target.value })}
+                                className="bg-background border border-border font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-primary"
+                              >
+                                {Object.entries(PARCEL_SIZE_LABELS).map(([v, l]) => (
+                                  <option key={v} value={v}>
+                                    {l}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                                Váha (kg)
+                              </span>
+                              <input
+                                type="number"
+                                min="0.01"
+                                step="0.1"
+                                value={getPForm(o.id).weight}
+                                onChange={(e) => setPForm(o.id, { weight: e.target.value })}
+                                className="w-24 bg-background border border-border font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-primary"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => submitToPacketa(o.id)}
+                              disabled={submittingPacketa === o.id || !o.packeta_point_id}
+                              className="flex items-center gap-1.5 bg-primary text-background font-mono text-[10px] uppercase tracking-widest px-4 py-2 hover:bg-primary/90 transition-all disabled:opacity-50"
+                            >
+                              {submittingPacketa === o.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Truck className="w-3 h-3" />
+                              )}
+                              Pridať do Packety
+                            </button>
+                            {!o.packeta_point_id && (
+                              <span className="font-mono text-[10px] text-destructive">
+                                Chýba výdajný bod
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         Stav:
@@ -1024,6 +1173,89 @@ function InfoBlock({
   );
 }
 
+// ─── Packeta Tab ──────────────────────────────────────────────────────────────
+function PacketaTab() {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await listOrders();
+      const all = (res.orders ?? []) as OrderRow[];
+      setOrders(all.filter((o) => o.packeta_packet_id));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  if (!loaded) {
+    setLoaded(true);
+    load();
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-2xl uppercase italic">Packeta zásielky</h2>
+        <button
+          type="button"
+          onClick={load}
+          className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Obnoviť
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="py-20 text-center">
+          <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest">
+            Žiadne zásielky odoslané do Packety
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {orders.map((o) => (
+            <div
+              key={o.id}
+              className="flex flex-wrap items-center gap-4 border border-border bg-card px-4 py-3"
+            >
+              <span className="font-mono text-xs font-bold text-primary shrink-0">{o.code}</span>
+              <span className="font-mono text-xs text-muted-foreground truncate flex-1 min-w-[150px]">
+                {o.email}
+              </span>
+              <span className="font-mono text-xs shrink-0">
+                Packeta ID: <span className="text-primary">{o.packeta_packet_id}</span>
+              </span>
+              <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                {o.packeta_parcel_size && PARCEL_SIZE_LABELS[o.packeta_parcel_size]?.split(" (")[0]}
+                {o.packeta_weight ? ` · ${o.packeta_weight} kg` : ""}
+              </span>
+              <span className="font-mono text-xs tabular-nums shrink-0">
+                {formatPrice(Number(o.total))}
+              </span>
+              <a
+                href={`https://client.packeta.com/sk/senders/packets/${o.packeta_packet_id}/edit`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary px-3 py-1.5 hover:bg-primary hover:text-background transition-all shrink-0"
+              >
+                <ExternalLink className="w-3 h-3" /> Otvoriť v Packete
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -1084,6 +1316,7 @@ function AdminPage() {
             [
               { id: "products", label: "Produkty", Icon: Package },
               { id: "orders", label: "Objednávky", Icon: ShoppingBag },
+              { id: "packeta", label: "Packeta", Icon: Truck },
             ] as { id: Tab; label: string; Icon: any }[]
           ).map(({ id, label, Icon }) => (
             <button
@@ -1104,7 +1337,7 @@ function AdminPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {tab === "products" ? <ProductsTab /> : <OrdersTab />}
+        {tab === "products" ? <ProductsTab /> : tab === "orders" ? <OrdersTab /> : <PacketaTab />}
       </div>
     </div>
   );
