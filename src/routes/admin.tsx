@@ -20,6 +20,8 @@ import {
   ChevronDown,
   Package,
   ShoppingBag,
+  Truck,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
