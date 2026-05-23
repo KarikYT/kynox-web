@@ -232,8 +232,14 @@ export const submitOrderToPacketa = createServerFn({ method: "POST" })
     const addressLines = (order.address || "").split("\n").map((l) => l.trim()).filter(Boolean);
     const fullName = addressLines[0] || order.email.split("@")[0];
     const parts = fullName.split(/\s+/);
-    const firstName = parts[0] || "Zákazník";
-    const surname = parts.slice(1).join(" ") || "—";
+    // FIX: removed diacritics from fallback ("Zákazník" → "Zakaznik") and replaced
+    // em-dash fallback "—" with firstName — Packeta rejects special characters in name fields.
+    const firstName = parts[0] || "Zakaznik";
+    const surname = parts.slice(1).join(" ") || firstName;
+
+    // FIX: phone must be non-empty; Packeta rejects an empty <phone> element.
+    const phoneValue = (order.phone || "").trim();
+    if (!phoneValue) throw new Error("Objednávka nemá vyplnené telefónne číslo potrebné pre Packetu.");
 
     const size = PARCEL_SIZES[data.parcelSize];
 
@@ -245,7 +251,7 @@ export const submitOrderToPacketa = createServerFn({ method: "POST" })
     <name>${escXml(firstName)}</name>
     <surname>${escXml(surname)}</surname>
     <email>${escXml(order.email)}</email>
-    <phone>${escXml(order.phone || "")}</phone>
+    <phone>${escXml(phoneValue)}</phone>
     <addressId>${escXml(order.packeta_point_id)}</addressId>
     <cod>0</cod>
     <value>${escXml(Number(order.total).toFixed(2))}</value>
@@ -265,11 +271,24 @@ export const submitOrderToPacketa = createServerFn({ method: "POST" })
     const responseText = await res.text();
     const status = getTag(responseText, "status");
     if (status !== "ok") {
-      const fault =
+      // FIX: extract actual <faultString> from inside <fault>, then append any
+      // per-attribute errors from <attributeErrors> so we see exactly which field
+      // Packeta rejected instead of the generic "See detail." message.
+      const faultBlock = responseText.match(/<fault>([\s\S]*?)<\/fault>/)?.[1] ?? "";
+      const faultString =
+        getTag(faultBlock, "faultString") ||
+        getTag(responseText, "faultString") ||
         getTag(responseText, "string") ||
-        getTag(responseText, "fault") ||
-        responseText.slice(0, 500);
-      throw new Error("Packeta chyba: " + fault);
+        "Unknown error";
+      const attrErrors = [...faultBlock.matchAll(/<attributeError>([\s\S]*?)<\/attributeError>/g)]
+        .map((m) => {
+          const name = getTag(m[1], "name") ?? "?";
+          const code = getTag(m[1], "faultCode") ?? getTag(m[1], "code") ?? "INVALID";
+          return `${name}: ${code}`;
+        })
+        .join(", ");
+      const detail = attrErrors ? `${faultString} [${attrErrors}]` : faultString;
+      throw new Error("Packeta chyba: " + detail);
     }
 
     const result = responseText.match(/<result>([\s\S]*?)<\/result>/)?.[1] ?? responseText;
