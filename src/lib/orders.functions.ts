@@ -214,11 +214,12 @@ export const submitOrderToPacketa = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase; // use auth'd client — no service role key needed
     const apiPassword = process.env.PACKETA_API_PASSWORD;
     if (!apiPassword) throw new Error("Chýba PACKETA_API_PASSWORD secret.");
 
-    const { data: order, error } = await supabaseAdmin
+    const { data: order, error } = await supabase
       .from("orders")
       .select("*")
       .eq("id", data.id)
@@ -299,7 +300,7 @@ export const submitOrderToPacketa = createServerFn({ method: "POST" })
 
     if (!packetId) throw new Error("Packeta nevrátila ID zásielky.");
 
-    await supabaseAdmin
+    await supabase
       .from("orders")
       .update({
         packeta_packet_id: packetId,
@@ -320,14 +321,15 @@ export const deleteOrder = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ id: z.string().uuid() }).parse(input)
   )
-  .handler(async ({ data }) => {
-    const { error: itemsError } = await supabaseAdmin
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase;
+    const { error: itemsError } = await supabase
       .from("order_items")
       .delete()
       .eq("order_id", data.id);
     if (itemsError) throw new Error(itemsError.message);
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("orders")
       .delete()
       .eq("id", data.id);
