@@ -141,7 +141,7 @@ function Index() {
                 Tréningové protokoly
               </span>
               <h2 className="font-display text-3xl sm:text-5xl md:text-6xl uppercase tracking-tighter italic">
-                Vyber si bolesť
+                Vyber si šport
               </h2>
             </div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground hidden md:block whitespace-nowrap">
